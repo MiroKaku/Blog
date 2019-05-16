@@ -6,7 +6,7 @@
   <link href="/Blog/atom.xml" rel="self"/>
   
   <link href="https://mirokaku.github.io/Blog/"/>
-  <updated>2019-05-16T11:14:30.654Z</updated>
+  <updated>2019-05-16T11:28:30.675Z</updated>
   <id>https://mirokaku.github.io/Blog/</id>
   
   <author>
@@ -21,21 +21,21 @@
     <link href="https://mirokaku.github.io/Blog/2018/Windbg-Network/"/>
     <id>https://mirokaku.github.io/Blog/2018/Windbg-Network/</id>
     <published>2018-10-03T11:07:33.000Z</published>
-    <updated>2019-05-16T11:14:30.654Z</updated>
+    <updated>2019-05-16T11:28:30.675Z</updated>
     
-    <content type="html"><![CDATA[<div class="note warning">            <p>Windbg 版本要与被调试的 Windows 版本一致! </p>          </div><ol><li><p>配置虚拟机</p> <div class="highlight-wrap"autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" contenteditable="true"data-rel="BASH"><figure class="iseeu highlight /bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">bcdedit /copy &#123;current&#125; /d TestMode</span><br><span class="line">bcdedit /<span class="built_in">set</span> &#123;new&#125; testsigning on</span><br><span class="line">bcdedit /<span class="built_in">set</span> &#123;new&#125; debug on</span><br><span class="line">bcdedit /<span class="built_in">set</span> disabledynamictick yes <span class="comment"># 可选</span></span><br><span class="line"><span class="comment"># hostip, port, key 自行修改</span></span><br><span class="line">bcdedit /dbgsettings net hostip:192.168.0.1 port:54231 key:ms.dbg.1809.64</span><br></pre></td></tr></table></figure></div></li><li><p>打开 <code>Windbg-&gt;File-&gt;Kernel Debugging</code></p><p> 填入上面配置的 port 和 key</p></li></ol>]]></content>
+    <content type="html"><![CDATA[<div class="note warning">            <p>Windbg 版本要与被调试的 Windows 版本一致! 否则可能出现网络包不支持. </p>          </div><ol><li><p>配置虚拟机</p> <div class="highlight-wrap"autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" contenteditable="true"data-rel="BASH"><figure class="iseeu highlight /bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">bcdedit /copy &#123;current&#125; /d TestMode</span><br><span class="line">bcdedit /<span class="built_in">set</span> &#123;new&#125; testsigning on</span><br><span class="line">bcdedit /<span class="built_in">set</span> &#123;new&#125; debug on</span><br><span class="line">bcdedit /<span class="built_in">set</span> disabledynamictick yes <span class="comment"># 可选</span></span><br><span class="line"><span class="comment"># hostip, port, key 自行修改</span></span><br><span class="line">bcdedit /dbgsettings net hostip:192.168.0.1 port:54231 key:ms.dbg.1809.64</span><br></pre></td></tr></table></figure></div></li><li><p>打开 <code>Windbg-&gt;File-&gt;Kernel Debugging</code></p><p> 填入上面配置的 port 和 key</p></li></ol>]]></content>
     
     <summary type="html">
     
       
       
         &lt;div class=&quot;note warning&quot;&gt;
-            &lt;p&gt;Windbg 版本要与被调试的 Windows 版本一致! &lt;/p&gt;
+            &lt;p&gt;Windbg 版本要与被调试的 Windows 版本一致! 否则可能出现网络包不支持. &lt;/p&gt;
           &lt;/div&gt;
 
 &lt;ol&gt;
 &lt;li&gt;&lt;p&gt;配置虚拟机&lt;/p&gt;
- &lt;div class=&quot;highlight-
+ &lt;div cla
       
     
     </summary>
