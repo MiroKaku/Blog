@@ -1,0 +1,1875 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN,en,default">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+  
+  
+  <link rel="stylesheet" href="/Blog/lib/needsharebutton/needsharebutton.css">
+
+
+
+
+
+  
+  
+  <link rel="stylesheet" href="/Blog/lib/Han/dist/han.min.css?v=3.3">
+
+
+
+  <meta http-equiv="Cache-Control" content="no-transform">
+  <meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link rel="stylesheet" href="/Blog/lib/fancybox/source/jquery.fancybox.css">
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/Blog/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/Blog/css/main.css?v=7.1.1">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/Blog/uploads/apple-touch-icon.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/Blog/uploads/favicon-32x32.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/Blog/uploads/favicon-16x16.png?v=7.1.1">
+
+
+  <link rel="mask-icon" href="/Blog/uploads/safari_pinned_tab.svg?v=7.1.1" color="#222">
+
+
+
+  <meta name="msapplication-config" content="/Blog/uploads/browserconfig.xml">
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/Blog/',
+    scheme: 'Gemini',
+    version: '7.1.1',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: true,
+    fancybox: true,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: 'OP1GITE8NC',
+      apiKey: '3376524e189201d978e52dbb0764689f',
+      indexName: 'Miro Blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="对象管理是 Windows Executive 的一个子系统实现, 用于管理 Windows 资源. 资源包括物理设备, 文件, 文件目录, 注册表条目, 正在运行的进程等等. 所有子系统访问资源都必须通过对象管理子系统.  对象实际上就是一组数据结构加操作(函数).  各种 Object 的共有的信息 (例如, 对象类型, 对象的引用计数, 句柄数等信息) 保存在 OBJECT_HEADER 与">
+<meta name="keywords" content="Windows,Kernel">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Windows kernel learning: 4. Object Management">
+<meta property="og:url" content="https://mirokaku.github.io/Blog/2017/4-Object-Management/index.html">
+<meta property="og:site_name" content="Miro&#39;s Blog">
+<meta property="og:description" content="对象管理是 Windows Executive 的一个子系统实现, 用于管理 Windows 资源. 资源包括物理设备, 文件, 文件目录, 注册表条目, 正在运行的进程等等. 所有子系统访问资源都必须通过对象管理子系统.  对象实际上就是一组数据结构加操作(函数).  各种 Object 的共有的信息 (例如, 对象类型, 对象的引用计数, 句柄数等信息) 保存在 OBJECT_HEADER 与">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://mirokaku.github.io/Blog/2017/4-Object-Management/Structure-object0.jpg">
+<meta property="og:image" content="https://mirokaku.github.io/Blog/2017/4-Object-Management/Structure-object.jpg">
+<meta property="og:image" content="https://mirokaku.github.io/Blog/2017/4-Object-Management/Structure-Handle.jpg">
+<meta property="og:image" content="https://mirokaku.github.io/Blog/2017/4-Object-Management/Structure-Handle-Entry.jpg">
+<meta property="og:image" content="https://mirokaku.github.io/Blog/2017/4-Object-Management/pool.jpg">
+<meta property="og:updated_time" content="2017-05-26T09:24:18.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Windows kernel learning: 4. Object Management">
+<meta name="twitter:description" content="对象管理是 Windows Executive 的一个子系统实现, 用于管理 Windows 资源. 资源包括物理设备, 文件, 文件目录, 注册表条目, 正在运行的进程等等. 所有子系统访问资源都必须通过对象管理子系统.  对象实际上就是一组数据结构加操作(函数).  各种 Object 的共有的信息 (例如, 对象类型, 对象的引用计数, 句柄数等信息) 保存在 OBJECT_HEADER 与">
+<meta name="twitter:image" content="https://mirokaku.github.io/Blog/2017/4-Object-Management/Structure-object0.jpg">
+
+
+
+  <link rel="alternate" href="/Blog/atom.xml" title="Miro's Blog" type="application/atom+xml">
+
+
+
+  
+  
+  <link rel="canonical" href="https://mirokaku.github.io/Blog/2017/4-Object-Management/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Windows kernel learning: 4. Object Management | Miro's Blog</title>
+  
+
+
+
+
+  <script async src="//www.googletagmanager.com/gtag/js?id=UA-140330910-1"></script>
+  <script>
+    var host = window.location.hostname;
+    if (host !== "localhost" || !true) {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-140330910-1');
+    }
+  </script>
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/Blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Miro's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <p class="site-subtitle">「碎碎念」</p>
+      
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/Blog/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/Blog/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/Blog/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+  
+  
+
+  
+
+  <span class="exturl github-corner" data-url="aHR0cHM6Ly9naXRodWIuY29tL21pcm9rYWt1" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewbox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"/><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"/><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"/></svg></span>
+
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+    <div class="reading-progress-bar"></div>
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://mirokaku.github.io/Blog/Blog/2017/4-Object-Management/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Miro">
+      <meta itemprop="description" content="喵喵喵?">
+      <meta itemprop="image" content="/Blog/uploads/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Miro's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Windows kernel learning: 4. Object Management
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2017-05-21 12:24:18" itemprop="dateCreated datePublished" datetime="2017-05-21T12:24:18+08:00">2017-05-21</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2017-05-26 17:24:18" itemprop="dateModified" datetime="2017-05-26T17:24:18+08:00">2017-05-26</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/Blog/categories/Windows-kernel-learning/" itemprop="url" rel="index"><span itemprop="name">Windows kernel learning</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+            <span id="/Blog/2017/4-Object-Management/" class="leancloud_visitors" data-flag-title="Windows kernel learning: 4. Object Management">
+              <span class="post-meta-divider">|</span>
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              
+                <span class="post-meta-item-text">阅读次数：</span>
+              
+                <span class="leancloud-visitors-count"></span>
+            </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body han-init-context" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>对象管理是 Windows Executive 的一个子系统实现, 用于管理 Windows 资源. 资源包括物理设备, 文件, 文件目录, 注册表条目, 正在运行的进程等等. 所有子系统访问资源都必须通过对象管理子系统. </p>
+<p>对象实际上就是一组数据结构加操作(函数). </p>
+<p>各种 Object 的共有的信息 (例如, 对象类型, 对象的引用计数, 句柄数等信息) 保存在 OBJECT_HEADER 与其他的几个结构中. 换而言之, 在对象管理器内部, 不同类型的对象具有相同的 Object Header, 但 Object Body 部分却是不同的.</p>
+<a id="more"></a>
+
+<p>Windows 有三种类型的对象: 内核对象 (Kernel objects) , 执行体对象 (Executive objects), 和 GDI/User 对象. </p>
+<ul>
+<li><p>内核对象: 表示一些基本资源, 如物理设备, 同步服务等等. 用户态的程序不能访问内核对象.  </p>
+</li>
+<li><p>执行体对象: 用户态的系统服务与应用程序使用执行对象, 这是 Windows Executive 对外暴露的对象, 用来封装一个或多个内核对象. 执行对象还用于实现 NT 子系统或 POSIX 子系统的一些功能. </p>
+</li>
+<li><p>用户对象: 每个对象仅有一个句柄, 句柄不能复制或继承, 不能引用其他用户会话中的进程的用户句柄. 任何进程只要有对某个用户句柄访问权限, 即可以访问该用户对象. 一个进程最多有 65536 个用户对象句柄.<br>用户对象包括: 快捷键表 HACCEL, 插入点光标, 鼠标指针 HCURSOR, DDE 会话, 窗口钩子, 图标 HICON, 菜单 HMENU, 窗口 HWND, 窗口位置.</p>
+</li>
+<li><p>GDI 对象: 每个对象仅有一个句柄, 句柄为进程私有. 一个进程最多有 65536 个 GDI 对象句柄.<br>GDI 对象包括: 位图 HBITMAP, 画刷 HBRUSH, 设备环境 (DC) HDC, 增强型图元文件 (EMF) , EMF 设备环境, 字体 HFONT, 内存 DC, 图元文件, 图元文件 DC, 调色板 HPALETTE, 画笔 HPEN, 区域 (Region) HRGN. </p>
+</li>
+</ul>
+<h2 id="Windows-NT-暴露的执行对象"><a href="#Windows-NT-暴露的执行对象" class="headerlink" title="Windows NT 暴露的执行对象"></a>Windows NT 暴露的执行对象</h2><table>
+<thead>
+<tr>
+<th align="left">对象类型</th>
+<th align="left">结构</th>
+<th align="left">代表含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">Process</td>
+<td align="left">_EPROCESS</td>
+<td align="left">执行一组线程对象所必须的虚拟地址空间和控制信息</td>
+</tr>
+<tr>
+<td align="left">Thread</td>
+<td align="left">_ETHREAD</td>
+<td align="left">进程内部的一个可执行实体</td>
+</tr>
+<tr>
+<td align="left">Job</td>
+<td align="left">_EJOB</td>
+<td align="left">指一组进程, 通过作业机制, 可以像单个实体那样来管理他们</td>
+</tr>
+<tr>
+<td align="left">Section</td>
+<td align="left">_SECTION_OBJECT</td>
+<td align="left">共享内存的一个区域 (也称为 File mapping)</td>
+</tr>
+<tr>
+<td align="left">File</td>
+<td align="left">_FILE_OBJECT</td>
+<td align="left">一个已打开的文件或者 I/O 设备的实例</td>
+</tr>
+<tr>
+<td align="left">Token</td>
+<td align="left">_TOKEN</td>
+<td align="left">一个进程或者线程的安全轮廓 (安全ID, 用户权限等)</td>
+</tr>
+<tr>
+<td align="left">Event</td>
+<td align="left">_KEVENT</td>
+<td align="left">一种具有持久状态 (有信号或无信号的) 对象,可用于同步或者通知</td>
+</tr>
+<tr>
+<td align="left">Semaphore</td>
+<td align="left">_KSEMAPHORE</td>
+<td align="left">信号量是一个计数器, 提供资源门控制能力, 对于该信号量所保护的资源只允许某个最大数目的线程访问</td>
+</tr>
+<tr>
+<td align="left">Mutex</td>
+<td align="left">_KMUTEX</td>
+<td align="left">用于顺序访问一个资源的一种同步机制</td>
+</tr>
+<tr>
+<td align="left">Timer</td>
+<td align="left">_ETIMER</td>
+<td align="left">这是一种当固定长度的时间过去时通知某个线程的机制</td>
+</tr>
+<tr>
+<td align="left">IoCompletion</td>
+<td align="left"></td>
+<td align="left">使线程能够将 “I/O 操作完成通知” 进出队列的一种方法</td>
+</tr>
+<tr>
+<td align="left">Key</td>
+<td align="left">_CM_KEY_BODY</td>
+<td align="left">一种引用注册表中数据的机制. 虽然键出现在对象管理器的命名空间中, 但是却是由配置管理器来管理的, 其管理方式类似于文件系统驱动程序管理文件对象的方式. 与该键对象关联在一起的有零个或多个键值; 一个键值中包含有关该键的数据</td>
+</tr>
+<tr>
+<td align="left">Directory</td>
+<td align="left"></td>
+<td align="left">对象管理器中命名空间的虚拟目录, 负责包含其他的对象或对象目录</td>
+</tr>
+<tr>
+<td align="left">TpWorkerFactory</td>
+<td align="left"></td>
+<td align="left">负责执行一组特定任务的线程集合. Windows 通过线程池的方式暴露工作者工厂对象</td>
+</tr>
+<tr>
+<td align="left">Tm (资源管理器), TmTx (事务), TmTm (事务管理器), TmEn (登记)</td>
+<td align="left"></td>
+<td align="left">内核事务管理器 (KTM) 为各种事物或登记而使用的对象, 他们是资源管理器或事务管理器的一部分.</td>
+</tr>
+<tr>
+<td align="left">WindowStation</td>
+<td align="left">tagWINDOWSTATION</td>
+<td align="left">该对象包含一个剪贴板, 一组全局原子, 一组桌面对象</td>
+</tr>
+<tr>
+<td align="left">Desktop</td>
+<td align="left">tagDESKTOP</td>
+<td align="left">这是一个包含在窗口站内部的对象. 它有一个逻辑显示器表面, 包含了窗口, 菜单 和 钩子.</td>
+</tr>
+<tr>
+<td align="left">PowerRequest</td>
+<td align="left"></td>
+<td align="left">该对象与一个线程关联在一起, 该线程执行 SetThreadExecutionState 调用请求指定的电源改变, 比如防止睡眠.</td>
+</tr>
+<tr>
+<td align="left">EtwConsumer</td>
+<td align="left"></td>
+<td align="left">代表一个已连接的 ETW 实时消费者已经通过 StartTrace API 进行了注册</td>
+</tr>
+<tr>
+<td align="left">EtwRegistration</td>
+<td align="left"></td>
+<td align="left">代表一个注册对象, 它与某个用户模式(或内核模式) ETW 提供者关联</td>
+</tr>
+<tr>
+<td align="left">SymbolicLink</td>
+<td align="left">_OBJECT_SYMBOLIC_LINK</td>
+<td align="left">被创建用来支持别名,这些别名可以来用帮助映射网络共享</td>
+</tr>
+<tr>
+<td align="left">Type</td>
+<td align="left">_OBJECT_TYPE</td>
+<td align="left">通过元数据来描述所有其他对象常见属性的一个对象</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>其他对象参考 <span class="exturl" data-url="aHR0cHM6Ly9tc2RuLm1pY3Jvc29mdC5jb20vZW4tdXMvbGlicmFyeS93aW5kb3dzL2Rlc2t0b3AvbXM3MjQ1MTUlMjh2PXZzLjg1JTI5LmFzcHg=" title="https://msdn.microsoft.com/en-us/library/windows/desktop/ms724515%28v=vs.85%29.aspx">Windows Object Categories<i class="fa fa-external-link"></i></span></p>
+</blockquote>
+<p>除了以上这些对象之外, 还有 Device, Driver, Adapter 等用于设备驱动的对象类型, 这些对象类型并由有专用的系统调用, 而是借用 <code>NtCreateFile()</code> 作为创建/打开的方法</p>
+<h2 id="对象结构"><a href="#对象结构" class="headerlink" title="对象结构"></a>对象结构</h2><p><img src="Structure-object0.jpg" alt="对象结构图0"><br><img src="Structure-object.jpg" alt="对象结构图"></p>
+<p>如图所示, 每个对象都有一个对象头和一个对象体. 每个对象头中有一个索引, 指向一个被称为类型对象的特殊对象, 该对象包含的信息对于它的每个实例是公共的.</p>
+<p>另外,还可以有多达 7 个可选的子头: </p>
+<ul>
+<li>名称信息头(<code>_OBJECT_HEADER_NAME_INFO</code>)</li>
+<li>配额信息头(<code>_OBJECT_HEADER_QUOTA_INFO</code>)</li>
+<li>进程信息头(<code>_OBJECT_HEADER_PROCESS_INFO</code>)</li>
+<li>句柄信息头(<code>_OBJECT_HEADER_HANDLE_INFO</code>)</li>
+<li>创建者信息头(<code>_OBJECT_HEADER_CREATOR_INFO</code>)</li>
+<li>审计信息头(<code>_OBJECT_HEADER_AUDIT_INFO</code>)</li>
+<li>填充信息头(<code>_OBJECT_HEADER_PADDING_INFO</code>)</li>
+</ul>
+<h2 id="对象头"><a href="#对象头" class="headerlink" title="对象头"></a>对象头</h2><p>我们来看下对象头的定义:</p>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">0</span>: kd&gt; <span class="built_in">dt</span> nt!_OBJECT_HEADER</span><br><span class="line">   +<span class="number">0x000</span> PointerCount     : Int8B</span><br><span class="line">   +<span class="number">0x008</span> HandleCount      : Int8B</span><br><span class="line">   +<span class="number">0x008</span> NextToFree       : Ptr64 Void</span><br><span class="line">   +<span class="number">0x010</span> <span class="keyword">Lock</span>             : _EX_PUSH_LOCK</span><br><span class="line">   +<span class="number">0x018</span> TypeIndex        : UChar</span><br><span class="line">   +<span class="number">0x019</span> TraceFlags       : UChar</span><br><span class="line">   +<span class="number">0x019</span> DbgRefTrace      : Pos <span class="number">0</span>, <span class="number">1</span> Bit</span><br><span class="line">   +<span class="number">0x019</span> DbgTracePermanent : Pos <span class="number">1</span>, <span class="number">1</span> Bit</span><br><span class="line">   +<span class="number">0x01a</span> InfoMask         : UChar</span><br><span class="line">   +<span class="number">0x01b</span> Flags            : UChar</span><br><span class="line">   +<span class="number">0x01b</span> NewObject        : Pos <span class="number">0</span>, <span class="number">1</span> Bit</span><br><span class="line">   +<span class="number">0x01b</span> KernelObject     : Pos <span class="number">1</span>, <span class="number">1</span> Bit</span><br><span class="line">   +<span class="number">0x01b</span> KernelOnlyAccess : Pos <span class="number">2</span>, <span class="number">1</span> Bit</span><br><span class="line">   +<span class="number">0x01b</span> ExclusiveObject  : Pos <span class="number">3</span>, <span class="number">1</span> Bit</span><br><span class="line">   +<span class="number">0x01b</span> PermanentObject  : Pos <span class="number">4</span>, <span class="number">1</span> Bit</span><br><span class="line">   +<span class="number">0x01b</span> DefaultSecurityQuota : Pos <span class="number">5</span>, <span class="number">1</span> Bit</span><br><span class="line">   +<span class="number">0x01b</span> SingleHandleEntry : Pos <span class="number">6</span>, <span class="number">1</span> Bit</span><br><span class="line">   +<span class="number">0x01b</span> DeletedInline    : Pos <span class="number">7</span>, <span class="number">1</span> Bit</span><br><span class="line">   +<span class="number">0x01c</span> Spare            : Uint4B</span><br><span class="line">   +<span class="number">0x020</span> ObjectCreateInfo : Ptr64 _OBJECT_CREATE_INFORMATION</span><br><span class="line">   +<span class="number">0x020</span> QuotaBlockCharged : Ptr64 Void</span><br><span class="line">   +<span class="number">0x028</span> SecurityDescriptor : Ptr64 Void</span><br><span class="line">   +<span class="number">0x030</span> Body             : _QUAD              <span class="comment">; 占位符, 对象体的位置</span></span><br></pre></td></tr></table></figure>
+
+<p>Body 就是具体对象类型的数据结构本身, 即一个数据结构的起点.</p>
+<h3 id="对象头中的域"><a href="#对象头中的域" class="headerlink" title="对象头中的域"></a>对象头中的域</h3><table>
+<thead>
+<tr>
+<th align="left">域</th>
+<th align="left">用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">HandleCount</td>
+<td align="left">维护一个计数值, 记录了当前打开打开的指向该对象的句柄数</td>
+</tr>
+<tr>
+<td align="left">PointerCount</td>
+<td align="left">维护一个计数值, 记录了该对象的引用个数 (每个句柄也算一次引用). 内核模式组件可以不通过句柄, 而直接用指针来引用对象.</td>
+</tr>
+<tr>
+<td align="left">SecurityDescriptor</td>
+<td align="left">决定谁可以使用该对象, 以及允许他们如何使用它. (根据定义, 没有名称的对象是没有安全性的)</td>
+</tr>
+<tr>
+<td align="left">TypeIndex</td>
+<td align="left">包含一个指向类型对象的索引, 该类型对象包含了这种类型对象的公共属性, 所有的类型对象都存储在 <code>nt!ObTypeIndexTable</code> 表中</td>
+</tr>
+<tr>
+<td align="left">InfoMask</td>
+<td align="left">可选头掩码, 除了创建者信息子头外, 只要存在, 就位于对象的前面. 该掩码通过 <code>nt!ObpInfoMaskToOffset</code> 表被转换成一个负的偏移;每个可选头都有一个与之关联的 <code>1</code> 字节索引, 将该可选头置于相对其他子头出现的位置</td>
+</tr>
+<tr>
+<td align="left">Flags</td>
+<td align="left">对象的特征和对象属性</td>
+</tr>
+<tr>
+<td align="left">Lock</td>
+<td align="left">针对每个对象的锁, 当修改该对象头部的域或者任何子头的域时, 需要用到该锁</td>
+</tr>
+<tr>
+<td align="left">TraceFlags</td>
+<td align="left">追踪开启标志, 用来调试引用计数问题</td>
+</tr>
+</tbody></table>
+<div class="note warning">
+            <p>ObfReferenceObject(), ObReferenceObjectByHandle(), ObReferenceObjectByName() 和 ObReferenceObjectByPointer() 增加的就是这个 PointerCount.<br>ObfDereferenceObject() 和 ObDereferenceObject() 用来减少这个值.</p><p>删除对象跟这个值有关, 如果一个对象是临时的, 那当它的引用记数为 0 的时候, 该对象会被系统删除, 一个驱动程序可以把一个临时对象的引用记数减少到0, 这样就可以达到删除该对象的目的.</p><p>如果一个对象是在创建时标上了 OBJ_PERMANENT 标志, 那它是一个永久的对象, 如果要删除一个永久性的对象, 需要经过下列步骤: </p><ol><li>调用 ObDereferenceObject 把一个永久性的对象的引用记数减少到0 </li><li>调用 ZwOpenXxx or ZwCreateXxx 来获得该永久性对象的一个句柄</li><li>或者得句柄后调用 ZwMakeTemporaryObject 把一个永久性的对象转化成一个临时的对象</li><li>用得到的句柄调用 ZwClose 删除该对象</li></ol><p>所以确定一个对象是临时的和永久的由 InitializeObjectAttributes 宏的 Attributes 决定.</p>
+          </div>
+
+<h3 id="对象-Flags"><a href="#对象-Flags" class="headerlink" title="对象 Flags"></a>对象 Flags</h3><table>
+<thead>
+<tr>
+<th align="left">属性标志</th>
+<th align="left">头标志</th>
+<th align="left">用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">OBJ_INHERIT</td>
+<td align="left">保存在句柄表项中</td>
+<td align="left">决定指向对象的句柄将来是否被子进程继承, 以及进程是否可以使用 DuplicateHandle 来执行句柄复制</td>
+</tr>
+<tr>
+<td align="left">OBJ_PERMANENT</td>
+<td align="left">OB_FLAG_PERMANENT_OBJECT</td>
+<td align="left">定义与引用计数相关的对象保持力行为</td>
+</tr>
+<tr>
+<td align="left">OBJ_EXCLUSIVE</td>
+<td align="left">OB_FLAG_EXCLUSIVE_OBJECT</td>
+<td align="left">决定一个对象只能被创建该对象的进程所使用</td>
+</tr>
+<tr>
+<td align="left">OBJ_CASE_INSENSITIVE</td>
+<td align="left">保存在句柄表项中</td>
+<td align="left">指定在命名空间中查找该对象应该按大小写无关的方式进行</td>
+</tr>
+<tr>
+<td align="left">OBJ_OPENIF</td>
+<td align="left">不保存, 仅在运行时使用</td>
+<td align="left">如果将此标志指定给创建对象的例程, 并且该对象已存在, 则例程应打开该对象. 否则, 创建对象的例程将返回 STATUS_OBJECT_NAME_COLLISION 的 NTSTATUS 代码.</td>
+</tr>
+<tr>
+<td align="left">OBJ_OPENLINK</td>
+<td align="left">不保存, 仅在运行时使用</td>
+<td align="left">指定对象管理器应该打开一个指向符号链接的句柄, 而不是指向目标对象的句柄</td>
+</tr>
+<tr>
+<td align="left">OBJ_KERNEL_HANDLE</td>
+<td align="left">OB_FLAG_KERNEL_OBJECT</td>
+<td align="left">指定指向该对象的句柄应该是一个内核句柄</td>
+</tr>
+<tr>
+<td align="left">OBJ_FORCE_ACCESS_CHECK</td>
+<td align="left">不保存, 仅在运行时使用</td>
+<td align="left">指定即使该对象是用内核模式中打开的, 也要执行完全的访问检查</td>
+</tr>
+<tr>
+<td align="left">OBJ_KERNEL_EXCLUSIVE</td>
+<td align="left">OB_FLAG_KERNEL_ONLY_ACCESS</td>
+<td align="left">禁止任何用户模式进程打开指向该对象的句柄, 用于保护 /Device/PhysicalMemory 内存区对象</td>
+</tr>
+<tr>
+<td align="left">-</td>
+<td align="left">OB_FLAG_DEFAULT_SECURITY_QUOTA</td>
+<td align="left">指定该对象的安全描述符使用模式的 2KB 配额</td>
+</tr>
+<tr>
+<td align="left">-</td>
+<td align="left">OB_FLAG_SINGLE_HANDLE_ENTRY</td>
+<td align="left">指定句柄信息可选头仅包含一项, 而不是一个数据库</td>
+</tr>
+<tr>
+<td align="left">-</td>
+<td align="left">OB_FLAG_NEW_OBJECT</td>
+<td align="left">指定该对象已被创建, 但是尚未被插入到对象命名空间中</td>
+</tr>
+<tr>
+<td align="left">-</td>
+<td align="left">OB_FLAG_DEFER_DELETE_INLINE</td>
+<td align="left">指定该对象正在通过一个延迟删除的辅助线程删除</td>
+</tr>
+</tbody></table>
+<h2 id="可选对象头"><a href="#可选对象头" class="headerlink" title="可选对象头"></a>可选对象头</h2><p>一个对象的可选头包含了用于描述该对象各种类型的元数据. 很明显, 因为它们是可选的, 所以并不是所有的类型的对象都拥有可选头;<br>甚至于相同类型对象的不同实例也可能包含可选头的不同组合. </p>
+<p>这些结构的位置是从对象头的开始减去一个并不固定的偏移量, 此偏移值取决于与对象头相关联的可选头的数量.</p>
+<p>对于所有可选头各种可能的情形, 都存在一个响应的偏移量, 但是因为可选头总是按照固定不变的顺序来分配,<br>所以对于一个给定的头, 它可能出现的位置的数量, 与优先于它而出现的最多可选头数量相同.</p>
+<p>偏移的计算公式为: </p>
+<div class="highlight-wrap" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" contenteditable="true" data-rel="C"><figure class="iseeu highlight /c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Offset = ObpInfoMaskToOffset[OBJECT_HEADER-&gt;InfoMask &amp; (DesiredHeaderBit | (DesiredHeaderBit<span class="number">-1</span>))]</span><br><span class="line"></span><br><span class="line"><span class="comment">// (DesiredHeaderBit | (DesiredHeaderBit-1)) 表示包含在此可选头结构之前的可选头结构.</span></span><br></pre></td></tr></table></figure></div>
+
+<table>
+<thead>
+<tr>
+<th align="left">名称</th>
+<th align="left">结构</th>
+<th align="right">掩位码</th>
+<th align="left">偏移</th>
+<th align="left">用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">创建者信息</td>
+<td align="left">_OBJECT_HEADER_CREATOR_INFO</td>
+<td align="right">0 (0x01)</td>
+<td align="left">ObpInfoMaskToOffset[0x01]</td>
+<td align="left">对于所有同一类型的对象, 链接成一个列表, 并记录下创建该对象的进程, 以及一个后向跟踪项</td>
+</tr>
+<tr>
+<td align="left">名称信息</td>
+<td align="left">_OBJECT_HEADER_NAME_INFO</td>
+<td align="right">1 (0x02)</td>
+<td align="left">ObpInfoMaskToOffset[0x03]</td>
+<td align="left">包含对象名称和一个指向对象目录的指针. 对象名称使用该对象对于其他进程也可见, 从而可以共享; 对象目录提供了存储对象名称的层次结构.</td>
+</tr>
+<tr>
+<td align="left">句柄信息</td>
+<td align="left">_OBJECT_HEADER_HANDLE_INFO</td>
+<td align="right">2 (0X04)</td>
+<td align="left">ObpInfoMaskToOffset[0X07]</td>
+<td align="left">包含一个进程项数据库 (或只有一项), 这些进程都有一个已打开的句柄指向该对象 (以及一个针对每个进程的句柄计数)</td>
+</tr>
+<tr>
+<td align="left">配额信息</td>
+<td align="left">_OBJECT_HEADER_QUOTA_INFO</td>
+<td align="right">3 (0x08)</td>
+<td align="left">ObpInfoMaskToOffset[0x0F]</td>
+<td align="left">列出了当一个进程打开指向该对象的句柄时需要消耗的资源花费</td>
+</tr>
+<tr>
+<td align="left">进程信息</td>
+<td align="left">_OBJECT_HEADER_PROCESS_INFO</td>
+<td align="right">4 (0x10)</td>
+<td align="left">ObpInfoMaskToOffset[0x1F]</td>
+<td align="left">如果这是一个排它性对象, 则包含一个指向所有者进程的指针</td>
+</tr>
+<tr>
+<td align="left">审计信息</td>
+<td align="left">_OBJECT_HEADER_AUDIT_INFO</td>
+<td align="right">5 (0x20)</td>
+<td align="left">ObpInfoMaskToOffset[0x3F]</td>
+<td align="left">未知</td>
+</tr>
+<tr>
+<td align="left">填充信息?</td>
+<td align="left">_OBJECT_HEADER_PADDING_INFO</td>
+<td align="right">6 (0x40)</td>
+<td align="left">ObpInfoMaskToOffset[0x7F]</td>
+<td align="left">未知</td>
+</tr>
+</tbody></table>
+<p>对象可选头出现的条件</p>
+<table>
+<thead>
+<tr>
+<th align="left">名称</th>
+<th align="left">条件</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">创建者信息</td>
+<td align="left">对象类型必须已经打开维护类型列表标志. 如果驱动程序检验器被启用, 则驱动程序对象已设置此标志. 然而, 若全局标志维护对象类型列表打开, 所有对象的维护类型列表标志也随之打开, 类型对象总是设置该标志</td>
+</tr>
+<tr>
+<td align="left">名称信息</td>
+<td align="left">对象创建时必须指定名称</td>
+</tr>
+<tr>
+<td align="left">句柄信息</td>
+<td align="left">对象类型必须已打开维护句柄计数标志. 文件对象, ALPC 对象, 窗口站对象和桌面对象已在其对象类型结构中设置了此标志</td>
+</tr>
+<tr>
+<td align="left">配额信息</td>
+<td align="left">对象必须不是由初始系统进程或空闲进程创建的</td>
+</tr>
+<tr>
+<td align="left">进程信息</td>
+<td align="left">对象创建时必须指定排他性对象标志</td>
+</tr>
+<tr>
+<td align="left">审计信息</td>
+<td align="left">开启对象访问审核功能时使用? 本地组策略有这么个选项…</td>
+</tr>
+<tr>
+<td align="left">填充信息</td>
+<td align="left">未知</td>
+</tr>
+</tbody></table>
+<h2 id="“对象类型”-对象-OBJECT-TYPE"><a href="#“对象类型”-对象-OBJECT-TYPE" class="headerlink" title="“对象类型” 对象 (_OBJECT_TYPE)"></a>“对象类型” 对象 (<code>_OBJECT_TYPE</code>)</h2><p>对象类型对象包含一些对于某种特定类型的所有对象皆为常数的数据.</p>
+<p><code>_OBJECT_HEADER</code> 的 <code>TypeIndex</code> 成员是 <code>nt!ObTypeIndexTable</code> (一个类型对象 <code>_OBJECT_TYPE</code> 的数组) 的索引.</p>
+<p>我们来看一下结构定义:</p>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span>: kd&gt; dtx -r nt!_OBJECT_TYPE</span><br><span class="line">   +<span class="number">0x000</span> TypeList         : _LIST_ENTRY</span><br><span class="line">   +<span class="number">0x010</span> Name             : _UNICODE_STRING</span><br><span class="line">   +<span class="number">0x020</span> DefaultObject    : Ptr64 Void</span><br><span class="line">   +<span class="number">0x028</span> Index            : UChar</span><br><span class="line">   +<span class="number">0x02c</span> TotalNumberOfObjects : Uint4B</span><br><span class="line">   +<span class="number">0x030</span> TotalNumberOfHandles : Uint4B</span><br><span class="line">   +<span class="number">0x034</span> HighWaterNumberOfObjects : Uint4B</span><br><span class="line">   +<span class="number">0x038</span> HighWaterNumberOfHandles : Uint4B</span><br><span class="line">   +<span class="number">0x040</span> TypeInfo         : _OBJECT_TYPE_INITIALIZER</span><br><span class="line">      +<span class="number">0x000</span> Length           : Uint2B</span><br><span class="line">      +<span class="number">0x002</span> ObjectTypeFlags  : UChar</span><br><span class="line">      +<span class="number">0x002</span> CaseInsensitive  : Pos <span class="number">0</span>, <span class="number">1</span> Bit            <span class="comment">; 是否大小写敏感</span></span><br><span class="line">      +<span class="number">0x002</span> UnnamedObjectsOnly : Pos <span class="number">1</span>, <span class="number">1</span> Bit          <span class="comment">; 是否永远不会有名称</span></span><br><span class="line">      +<span class="number">0x002</span> UseDefaultObject : Pos <span class="number">2</span>, <span class="number">1</span> Bit            <span class="comment">; 是否使用默认对象</span></span><br><span class="line">      +<span class="number">0x002</span> SecurityRequired : Pos <span class="number">3</span>, <span class="number">1</span> Bit            <span class="comment">; 是否要求安全描述符</span></span><br><span class="line">      +<span class="number">0x002</span> MaintainHandleCount : Pos <span class="number">4</span>, <span class="number">1</span> Bit         <span class="comment">; 是否一共维护句柄数据库 (句柄信息可选头)</span></span><br><span class="line">      +<span class="number">0x002</span> MaintainTypeList : Pos <span class="number">5</span>, <span class="number">1</span> Bit            <span class="comment">; 是否应该维护类型列表链接关系 (创建者信息可选头)</span></span><br><span class="line">      +<span class="number">0x002</span> SupportsObjectCallbacks : Pos <span class="number">6</span>, <span class="number">1</span> Bit     <span class="comment">; 是否支持对象过滤回调</span></span><br><span class="line">      +<span class="number">0x002</span> CacheAligned     : Pos <span class="number">7</span>, <span class="number">1</span> Bit</span><br><span class="line">      +<span class="number">0x004</span> ObjectTypeCode   : Uint4B</span><br><span class="line">      +<span class="number">0x008</span> InvalidAttributes : Uint4B</span><br><span class="line">      +<span class="number">0x00c</span> GenericMapping   : _GENERIC_MAPPING</span><br><span class="line">         +<span class="number">0x000</span> GenericRead      : Uint4B</span><br><span class="line">         +<span class="number">0x004</span> GenericWrite     : Uint4B</span><br><span class="line">         +<span class="number">0x008</span> GenericExecute   : Uint4B</span><br><span class="line">         +<span class="number">0x00c</span> GenericAll       : Uint4B</span><br><span class="line">      +<span class="number">0x01c</span> ValidAccessMask  : Uint4B</span><br><span class="line">      +<span class="number">0x020</span> RetainAccess     : Uint4B</span><br><span class="line">      +<span class="number">0x024</span> PoolType         : </span><br><span class="line">         NonPagedPool = 0n0</span><br><span class="line">         NonPagedPoolExecute = 0n0</span><br><span class="line">         PagedPool = 0n1</span><br><span class="line">         NonPagedPoolMustSucceed = 0n2</span><br><span class="line">         DontUseThisType = 0n3</span><br><span class="line">         NonPagedPoolCacheAligned = 0n4</span><br><span class="line">         PagedPoolCacheAligned = 0n5</span><br><span class="line">         NonPagedPoolCacheAlignedMustS = 0n6</span><br><span class="line">         MaxPoolType = 0n7</span><br><span class="line">         NonPagedPoolBase = 0n0</span><br><span class="line">         NonPagedPoolBaseMustSucceed = 0n2</span><br><span class="line">         NonPagedPoolBaseCacheAligned = 0n4</span><br><span class="line">         NonPagedPoolBaseCacheAlignedMustS = 0n6</span><br><span class="line">         NonPagedPoolSession = 0n32</span><br><span class="line">         PagedPoolSession = 0n33</span><br><span class="line">         NonPagedPoolMustSucceedSession = 0n34</span><br><span class="line">         DontUseThisTypeSession = 0n35</span><br><span class="line">         NonPagedPoolCacheAlignedSession = 0n36</span><br><span class="line">         PagedPoolCacheAlignedSession = 0n37</span><br><span class="line">         NonPagedPoolCacheAlignedMustSSession = 0n38</span><br><span class="line">         NonPagedPoolNx = 0n512</span><br><span class="line">         NonPagedPoolNxCacheAligned = 0n516</span><br><span class="line">         NonPagedPoolSessionNx = 0n544</span><br><span class="line">      +<span class="number">0x028</span> DefaultPagedPoolCharge : Uint4B</span><br><span class="line">      +<span class="number">0x02c</span> DefaultNonPagedPoolCharge : Uint4B</span><br><span class="line">      +<span class="number">0x030</span> DumpProcedure    : Ptr64        void </span><br><span class="line">      +<span class="number">0x038</span> OpenProcedure    : Ptr64        long </span><br><span class="line">      +<span class="number">0x040</span> CloseProcedure   : Ptr64        void </span><br><span class="line">      +<span class="number">0x048</span> DeleteProcedure  : Ptr64        void </span><br><span class="line">      +<span class="number">0x050</span> ParseProcedure   : Ptr64        long </span><br><span class="line">      +<span class="number">0x058</span> SecurityProcedure : Ptr64        long </span><br><span class="line">      +<span class="number">0x060</span> QueryNameProcedure : Ptr64        long </span><br><span class="line">      +<span class="number">0x068</span> OkayToCloseProcedure : Ptr64        unsigned char </span><br><span class="line">      +<span class="number">0x070</span> WaitObjectFlagMask : Uint4B</span><br><span class="line">      +<span class="number">0x074</span> WaitObjectFlagOffset : Uint2B</span><br><span class="line">      +<span class="number">0x076</span> WaitObjectPointerOffset : Uint2B</span><br><span class="line">   +<span class="number">0x0b8</span> TypeLock         : _EX_PUSH_LOCK</span><br><span class="line">   +<span class="number">0x0c0</span> Key              : Uint4B                     <span class="comment">; 一个 4 字节的标签用于唯一标识分配包含特定类型对象的内存</span></span><br><span class="line">   +<span class="number">0x0c8</span> CallbackList     : _LIST_ENTRY</span><br></pre></td></tr></table></figure>
+
+<p><code>_OBJECT_TYPE</code> 结构和 <code>_OBJECT_TYPE_INITIALIZER</code> 结构中的域:</p>
+<table>
+<thead>
+<tr>
+<th align="left">域</th>
+<th align="left">用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">Name</td>
+<td align="left">类型对象的名称 (Process, Event, Port 等等)</td>
+</tr>
+<tr>
+<td align="left">PoolType</td>
+<td align="left">指明了这种类型的对象应该从换页的还是非换页的内存分配</td>
+</tr>
+<tr>
+<td align="left">DefaultPagedPoolCharge &amp; DefaultNonPagedPoolCharge</td>
+<td align="left">默认的配额花费, 默认从进程配额中扣除的换页内存值和非换页内存值</td>
+</tr>
+<tr>
+<td align="left">ValidAccessMask</td>
+<td align="left">线程在打开某个指向该类型的对象时, 可以请求的访问类型</td>
+</tr>
+<tr>
+<td align="left">GenericMapping</td>
+<td align="left">通用访问权限的映射关系, 在四种通用的访问权限和特属于该类型的访问权限之间的映射关系</td>
+</tr>
+<tr>
+<td align="left">ObjectTypeFlags</td>
+<td align="left">对象标志, 具体标志在结构中已注解</td>
+</tr>
+<tr>
+<td align="left">ObjectTypeCode</td>
+<td align="left">用于描述这种对象的类型 (对应于另一种方法, 比较名称值). 文件对象设置该类型码为 1, 同步对象设置为 2, 线程对象设置为 4, ALPC 也利用该域来保存一条消息关联的句柄属性信息</td>
+</tr>
+<tr>
+<td align="left">InvalidAttributes</td>
+<td align="left">指明了对象属性标志对此对象类型无效</td>
+</tr>
+<tr>
+<td align="left">DefaultObject</td>
+<td align="left">指定了在等待此对象过程中应该使用的对象管理器内部事件(如果对象类型创建者请求一个默认对象的话). 注意: 特定的对象, 比如文件对象和 ALPC 端口对象, 已经包含了他们自己内嵌的分发器对象. 在这种情况下, 该域是对象体内部的偏移量. 例如, FILE_OBJECT 结构内部的事件位于内嵌的 Event 域中.</td>
+</tr>
+<tr>
+<td align="left">XXXXProcedure</td>
+<td align="left">在一个对象的生命期的特点上, 对象管理器自动调用一个或者多个例程来满足功能</td>
+</tr>
+</tbody></table>
+<div class="note success">
+            <p>同步是一个对于 Windows 应用程序可见的属性, 它指的是, 一个线程通过等待某个对象从一种状态改成成另一种状态, 从而达到同步其执行过程的能力.<br>一个线程可以通过执行体的作业, 进程, 线程, 文件, 事件, 信号量, 互斥体和定时器对象来进行同步.其他的执行体对象不支持同步.</p><p>一个对象支持同步的能力基于以下三种可能性:</p><ul><li>该执行体对象是一个分发器对象的包装对象, 它包含一个分发器头; 分发器头是一个内核结构.</li><li>对象类型的创建者请求一个默认对象, 而对象管理器提供默认对象.</li><li>执行体对象有一个内嵌的分发器对象, 比如在对象体内部某处的一个事件; 该对象呢的所有者在注册此对象类型时向对象管理器提供了此内嵌对象的偏移量.</li></ul>
+          </div>
+
+<h2 id="对象方法"><a href="#对象方法" class="headerlink" title="对象方法"></a>对象方法</h2><p><code>_OBJECT_TYPE_INITIALIZER</code> 结构中 XXXXProcedure 域, 即方法, 是一组内部例程构成的.<br>之所以设计这些对象方法, 是为了针对这样的事实: 某些特定的对象操作是通用的 (关闭, 复制, 安全等). 要将这些通用的操作完全一般化将要求对象管理器设计者必须预知所有的对象类型.</p>
+<p>对象方法:</p>
+<table>
+<thead>
+<tr>
+<th align="left">方法</th>
+<th align="left">何时调用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">Open</td>
+<td align="left">当对象句柄被打开时</td>
+</tr>
+<tr>
+<td align="left">Close</td>
+<td align="left">当对象句柄被关闭时</td>
+</tr>
+<tr>
+<td align="left">Delete</td>
+<td align="left">在对象管理器删除对象之前</td>
+</tr>
+<tr>
+<td align="left">QueryName</td>
+<td align="left">当线程请求在一个从属命名空间中查询一个对象的名称时(比如文件对象)</td>
+</tr>
+<tr>
+<td align="left">Parse</td>
+<td align="left">当对象管理器在一个从属命名空间中搜索一个对象名称时</td>
+</tr>
+<tr>
+<td align="left">Dump</td>
+<td align="left">未使用</td>
+</tr>
+<tr>
+<td align="left">OkayToClose</td>
+<td align="left">当对象管理器接到指令要关闭句柄时, 针对恶意或者不正确关闭句柄的一个额外保护层</td>
+</tr>
+<tr>
+<td align="left">Security</td>
+<td align="left">当进程读取或改变一个对象在其从属命名空间中的保护属性时</td>
+</tr>
+</tbody></table>
+<p>这一规则的一个例外是安全(Security)例程, 该例程除非另行指明, 否则默认指向 <code>SeDefaultObjectMethod</code>. 此默认例程不需要知道对象的内部结构, 因为它只处理对象的安全描述符.<br>而安全描述符的指针存储在所有对象都适用的对象头, 而不是对象体中.</p>
+<h2 id="对象句柄和进程句柄表"><a href="#对象句柄和进程句柄表" class="headerlink" title="对象句柄和进程句柄表"></a>对象句柄和进程句柄表</h2><p>当一个进程根据名称来创建或者打开一个对象时, 它接收到一个句柄, 代表了对此对象的访问. 句柄的设计使得应用程序不用直接与系统数据结构打交道.</p>
+<p>对象句柄还提供了额外的好处:</p>
+<ol>
+<li>除了所指向的内容不同, 文件句柄, 事件句柄和进程句柄没有区别, 使得可以用一个统一的接口来引用对象, 而无须关心类型.</li>
+<li>对象管理器有独占的权限来创建句柄, 以及找到一个句柄所指的对象. 意味着可以审查调用者的权限.</li>
+</ol>
+<p>对象句柄是一个索引, 指向进程特定的句柄表中的表项, 在 <code>_EPROCESS-&gt;ObjectTable</code> 中指向进程的句柄表.<br>第一个句柄索引是4, 第二个是8, 依此类推.</p>
+<div class="note danger">
+            <p>系统组件和设备驱动程序通常需要打开一些不应该让用户模式应用程序访问的对象句柄, 这可以通过在内核句柄表(<code>nt!ObpKernelHandleTable</code>)中创建句柄来实现.<br>该表中的句柄只有在内核模式下才可以访问, 但是可以在任何一个进程的环境下. So, 不会招致任何性能影响.</p><p>另外, 内核句柄会被置标志位 <code>KERNEL_HANDLE_MASK</code>. 在 x86 系统中, <code>KERNEL_HANDLE_MASK = 0x80000000</code>, 在 x64 系统中 <code>KERNEL_HANDLE_MASK = 0xFFFFFFFF80000000</code>.</p>
+          </div>
+
+<blockquote>
+<p>另外, <code>PspCidTable</code> 这个PID表中的 <code>_HANDLE_TABLE_ENTRY</code> 指向的是对象体, 而 <code>_EPROCESS-&gt;ObjectTable</code> 指向的是对象头.</p>
+</blockquote>
+<p>一个进程的句柄表包含了所有已被该进程打开了句柄的那些对象的指针, 句柄表的实现方式是一个三层结构, 类似于x86内存管理单元实现的从内存地址到物理地址的转译方式.</p>
+<p>子句柄表中包含的表项的数据等于能填满一页的表项数减去一项, 这一项用于处理审计.</p>
+<h3 id="句柄结构"><a href="#句柄结构" class="headerlink" title="句柄结构"></a>句柄结构</h3><p>句柄表项是通过句柄来索引的, 所以我们先看一下句柄的结构</p>
+<div class="highlight-wrap" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" contenteditable="true" data-rel="C"><figure class="iseeu highlight /c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> STRICT</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">void</span> *HANDLE;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> DECLARE_HANDLE(name) struct name##__ &#123; int unused; &#125;; typedef struct name##__ *name</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line"><span class="keyword">typedef</span> PVOID HANDLE;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> DECLARE_HANDLE(name) typedef HANDLE name</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"><span class="keyword">typedef</span> HANDLE *PHANDLE;</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">EXHANDLE</span> &#123;</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">union</span> &#123;</span><br><span class="line"></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">            ULONG_PTR TagBits : <span class="number">2</span>;  <span class="comment">//  Application available tag bits</span></span><br><span class="line">            ULONG_PTR Index : <span class="number">30</span>;   <span class="comment">//  The handle table entry index</span></span><br><span class="line">        &#125;;</span><br><span class="line"></span><br><span class="line">        HANDLE GenericHandleOverlay;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> HANDLE_VALUE_INC 4          <span class="comment">// Amount to increment the Value to get to the next handle</span></span></span><br><span class="line"></span><br><span class="line">        ULONG_PTR Value;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">&#125; EXHANDLE, *PEXHANDLE;</span><br></pre></td></tr></table></figure></div>
+
+<h3 id="句柄表结构"><a href="#句柄表结构" class="headerlink" title="句柄表结构"></a>句柄表结构</h3><p><img src="Structure-Handle.jpg" alt="Windows进程句柄表结构"></p>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span>: kd&gt; <span class="built_in">dt</span> nt!_HANDLE_TABLE</span><br><span class="line">   +<span class="number">0x000</span> NextHandleNeedingPool : Uint4B                    <span class="comment">; 当前句柄表的最大句柄值 + 1, 即下一个句柄表扩展的起始句柄值</span></span><br><span class="line">   +<span class="number">0x004</span> ExtraInfoPages   : Int4B</span><br><span class="line">   +<span class="number">0x008</span> TableCode        : Uint8B                         <span class="comment">; 指向顶级句柄表树节点的指针, 其中低三位用来表示有几层句柄表</span></span><br><span class="line">   +<span class="number">0x010</span> QuotaProcess     : Ptr64 _EPROCESS                <span class="comment">; 句柄表的内存资源记录在此进程中</span></span><br><span class="line">   +<span class="number">0x018</span> HandleTableList  : _LIST_ENTRY                    <span class="comment">; 全局句柄表 (`nt!HandleTableListHead`) 的列表, 该字段由全局锁保护</span></span><br><span class="line">   +<span class="number">0x028</span> UniqueProcessId  : Uint4B                         <span class="comment">; 创建进程的ID, 用于回调函数</span></span><br><span class="line">   +<span class="number">0x02c</span> Flags            : Uint4B</span><br><span class="line">   +<span class="number">0x02c</span> StrictFIFO       : Pos <span class="number">0</span>, <span class="number">1</span> Bit                   <span class="comment">; 是否使用 FIFO 风格的重用, 即先释放先重用</span></span><br><span class="line">   +<span class="number">0x02c</span> EnableHandleExceptions : Pos <span class="number">1</span>, <span class="number">1</span> Bit</span><br><span class="line">   +<span class="number">0x02c</span> Rundown          : Pos <span class="number">2</span>, <span class="number">1</span> Bit</span><br><span class="line">   +<span class="number">0x02c</span> Duplicated       : Pos <span class="number">3</span>, <span class="number">1</span> Bit</span><br><span class="line">   +<span class="number">0x030</span> HandleContentionEvent : _EX_PUSH_LOCK             <span class="comment">; 若在访问句柄时发生竞争, 则在此推锁上等待</span></span><br><span class="line">   +<span class="number">0x038</span> HandleTableLock  : _EX_PUSH_LOCK</span><br><span class="line">   +<span class="number">0x040</span> FreeLists        : [<span class="number">1</span>] _HANDLE_TABLE_FREE_LIST    <span class="comment">; 空闲句柄表链表</span></span><br><span class="line">   +<span class="number">0x040</span> ActualEntry      : [<span class="number">32</span>] UChar</span><br><span class="line">   +<span class="number">0x060</span> DebugInfo        : Ptr64 _HANDLE_TRACE_DEBUG_INFO</span><br></pre></td></tr></table></figure>
+
+<p><strong>TableCode</strong> 域是一个指针, 指向句柄表的最高层表项页面, 它的低 2 位的值代表了当前句柄表的层数.<br>也就是说, 如果 TableCode 的最低 2 位为0, 说明句柄表只有一层, 此种情况下该进程最多只能容纳 <code>LOWLEVEL_THRESHOLD</code> 个句柄, 即 TableCode 指向一个底层句柄表页面, 该页面是一个句柄表项(<code>nt!_HANDLE_TABLE_ENTRY</code>)的数组;<br>如果 TableCode 的最低 2 位为 1, 则说明句柄表有两层, 此种情况下该进程可容纳的句柄数是 <code>MIDLEVEL_THRESHOLD</code>, 即 TableCode 指向一个中层句柄表页面, 该页面包含 <code>MIDLEVEL_COUNT</code> 个指针, 每个指针指向一个低层句柄表页面;<br>如果 TableCode 的最低 2 位为 2, 则说明句柄表有三层, 此种情况下三层结构可容纳的句柄数是 <code>HIGHLEVEL_THRESHOLD</code>.  即 TableCode 指向一个高层句柄表页面, 该页面包含 <code>HIGHLEVEL_COUNT</code> 个指针, 每个指针指向一个中层句柄表页面;<br>但Windows 执行体限定每个进程的句柄数不得超过 <code>MAX_HANDLES</code>.</p>
+<p>TableCode 可以理解成是 <code>_HANDLE_TABLE_ENTRY</code> 多维数组.</p>
+<p>下面是相关的几个宏定义</p>
+<div class="highlight-wrap" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" contenteditable="true" data-rel="C"><figure class="iseeu highlight /c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Define the page size for the AMD64 as 4096 (0x1000).</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PAGE_SIZE 0x1000</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> TABLE_PAGE_SIZE PAGE_SIZE</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Absolute maximum number of handles allowed</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MAX_HANDLES (1&lt;&lt;24)</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> LOWLEVEL_COUNT (TABLE_PAGE_SIZE / sizeof(HANDLE_TABLE_ENTRY))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MIDLEVEL_COUNT (PAGE_SIZE / sizeof(PHANDLE_TABLE_ENTRY))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> HIGHLEVEL_COUNT  MAX_HANDLES / (LOWLEVEL_COUNT * MIDLEVEL_COUNT)</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> LOWLEVEL_THRESHOLD LOWLEVEL_COUNT</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MIDLEVEL_THRESHOLD (MIDLEVEL_COUNT * LOWLEVEL_COUNT)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> HIGHLEVEL_THRESHOLD (MIDLEVEL_COUNT * MIDLEVEL_COUNT * LOWLEVEL_COUNT)</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> HIGHLEVEL_SIZE (HIGHLEVEL_COUNT * sizeof (PHANDLE_TABLE_ENTRY))</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> LEVEL_CODE_MASK 3</span></span><br></pre></td></tr></table></figure></div>
+
+<p>好, 现在我们来看一下 <code>ExpLookupHandleTableEntry</code> 是怎么实现根据 HANDLE 从 HandleTable 中找到 HandleTableEntry 的.</p>
+<blockquote>
+<p>这个代码是自己逆向 Windows 8.1 x64 来的. 除了比 WRK 的简洁点, 实际上是一样的.</p>
+</blockquote>
+<div class="highlight-wrap" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" contenteditable="true" data-rel="C"><figure class="iseeu highlight /c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">HANDLE_TABLE_ENTRY *<span class="title">ExpLookupHandleTableEntry</span> <span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">    HANDLE_TABLE *aHandleTable,</span></span></span><br><span class="line"><span class="function"><span class="params">    EXHANDLE aHandle)</span> </span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    HANDLE_TABLE_ENTRY *vEntry = <span class="literal">nullptr</span>;</span><br><span class="line"></span><br><span class="line">    aHandle.TagBits = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (aHandle.Value &lt; aHandleTable-&gt;NextHandleNeedingPool)</span><br><span class="line">    &#123;</span><br><span class="line">        ULONG_PTR vTableCode = aHandleTable-&gt;TableCode &amp; (~<span class="number">3</span>);</span><br><span class="line">        <span class="keyword">char</span> vLevel = aHandleTable-&gt;TableCode &amp; <span class="number">3</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">char</span> *vEntryArray = <span class="literal">nullptr</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">int</span> i = aHandle.Value &amp; <span class="number">0x3FF</span>;          <span class="comment">// Level 0 Index, 10bit</span></span><br><span class="line">        <span class="keyword">int</span> j = (aHandle.Value &gt;&gt; <span class="number">10</span>) &amp; <span class="number">0x1FF</span>;  <span class="comment">// Level 1 Index, 9bit</span></span><br><span class="line">        <span class="keyword">int</span> k = (aHandle.Value &gt;&gt; <span class="number">19</span>);          <span class="comment">// Level 2 Index, other</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (<span class="number">0</span> == vLevel)</span><br><span class="line">        &#123;</span><br><span class="line">            vEntryArray = (<span class="keyword">char</span>*)vTableCode;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (<span class="number">1</span> == vLevel)</span><br><span class="line">        &#123;</span><br><span class="line">            vEntryArray = (<span class="keyword">char</span>*)(((HANDLE_TABLE_ENTRY**)vTableCode)[j]);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (<span class="number">2</span> == vLevel)</span><br><span class="line">        &#123;</span><br><span class="line">            vEntryArray = (<span class="keyword">char</span>*)(((HANDLE_TABLE_ENTRY***)vTableCode)[k][j]);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        vEntry = (HANDLE_TABLE_ENTRY*)&amp;(vEntryArray[ aHandle.Value * <span class="keyword">sizeof</span>(HANDLE_TABLE_ENTRY) / HANDLE_VALUE_INC ]);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> vEntry;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h3 id="句柄表项结构"><a href="#句柄表项结构" class="headerlink" title="句柄表项结构"></a>句柄表项结构</h3><p><img src="Structure-Handle-Entry.jpg" alt="句柄表项结构"></p>
+<p>句柄表项的标志位含义:</p>
+<ul>
+<li>L: 锁标志位,说明了该表项当前是否正在使用.</li>
+<li>I: 继承标志位, 指明了该进程创建的进程是否可以在其句柄表中有一份该句柄的副本.</li>
+<li>A: 审计标志位, 关闭该对象时是否应该产生一个审计消息</li>
+<li>P: 关闭保护标志位, 此位保存在访问掩码的未使用部分, 指明了调用者是否允许关闭该句柄.(NtSetInformationObject 系统调用来设置.)</li>
+</ul>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span>: kd&gt; <span class="built_in">dt</span> nt!_HANDLE_TABLE_ENTRY</span><br><span class="line">   +<span class="number">0x000</span> VolatileLowValue : Int8B</span><br><span class="line">   +<span class="number">0x000</span> LowValue         : Int8B</span><br><span class="line">   +<span class="number">0x000</span> InfoTable        : Ptr64 _HANDLE_TABLE_ENTRY_INFO</span><br><span class="line">   +<span class="number">0x000</span> Unlocked         : Pos <span class="number">0</span>, <span class="number">1</span> Bit</span><br><span class="line">   +<span class="number">0x000</span> RefCnt           : Pos <span class="number">1</span>, <span class="number">16</span> <span class="meta">Bits</span></span><br><span class="line">   +<span class="number">0x000</span> Attributes       : Pos <span class="number">17</span>, <span class="number">3</span> <span class="meta">Bits</span>                 <span class="comment">; 这就是上面图说的 A, I, L 三个属性位...</span></span><br><span class="line">   +<span class="number">0x000</span> ObjectPointerBits : Pos <span class="number">20</span>, <span class="number">44</span> <span class="meta">Bits</span>               <span class="comment">; 对象地址的中间 44bit 部分. 首部 16bit 部分为 0xFFFF, 尾部 4bit 部分为 0. </span></span><br><span class="line">   +<span class="number">0x008</span> HighValue        : Int8B</span><br><span class="line">   +<span class="number">0x008</span> NextFreeHandleEntry : Ptr64 _HANDLE_TABLE_ENTRY</span><br><span class="line">   +<span class="number">0x008</span> LeafHandleValue  : _EXHANDLE</span><br><span class="line">   +<span class="number">0x008</span> GrantedAccessBits : Pos <span class="number">0</span>, <span class="number">25</span> <span class="meta">Bits</span>                <span class="comment">; 对象权限访问掩码</span></span><br><span class="line">   +<span class="number">0x008</span> NoRightsUpgrade  : Pos <span class="number">25</span>, <span class="number">1</span> Bit</span><br><span class="line">   +<span class="number">0x008</span> Spare            : Pos <span class="number">26</span>, <span class="number">6</span> <span class="meta">Bits</span></span><br><span class="line">   +<span class="number">0x00c</span> TypeInfo         : Uint4B                         <span class="comment">; TypeInfo == _OBJECT_HEADER.TypeIndex == _OBJECT_TYPE.Index, 这三个字段是一样的</span></span><br></pre></td></tr></table></figure>
+
+<p>内核对象的地址算法:</p>
+<div class="highlight-wrap" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" contenteditable="true" data-rel="C"><figure class="iseeu highlight /c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Object = (Entry-&gt;ObjectPointerBits &lt;&lt; <span class="number">4</span> ) | <span class="number">0xFFFF000000000000</span>;</span><br></pre></td></tr></table></figure></div>
+
+<p>其中, 在普通的句柄表项里面存储的是对象头, 所以得到对象体要加上对象头的大小; 而在 PspCidTable 中的句柄表项里面存储的是对象体;</p>
+<p>那么, 这个算法是怎么得到的呢? 在 <code>ObReferenceObjectByHandleWithTag</code> 函数中调用了 <code>ObpReferenceObjectByHandle</code> 来根据句柄得到对象的. </p>
+<p>但是我逆向 <code>ObpReferenceObjectByHandle</code> 函数, 只发现了一半的处理?? 还差 <code>or 0xFFFF000000000000</code> 的代码?? 如果有哪位同学知道, 麻烦告知一下~~</p>
+<p>这行就是我逆向 <code>ObpReferenceObjectByHandle</code> 得到的核心代码, 但是只能得到不完整的地址..</p>
+<div class="highlight-wrap" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" contenteditable="true" data-rel="C"><figure class="iseeu highlight /c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">*vObjectHeader = (_OBJECT_HEADER *)(((<span class="keyword">signed</span> __int64)vObjectHandle &gt;&gt; <span class="number">16</span>) &amp; <span class="number">0xFFFFFFFFFFFFFFF0</span>ui64);</span><br></pre></td></tr></table></figure></div>
+
+<h3 id="用-Windbg-从-Handle-得到-Object"><a href="#用-Windbg-从-Handle-得到-Object" class="headerlink" title="用 Windbg 从 Handle 得到 Object"></a>用 Windbg 从 Handle 得到 Object</h3><p>好~ 那么, 我们就来用 Windbg 来验证一下前面研究的成果好了~</p>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">; 我通过 SysinternalsSuite 工具包里面的 TestLimit 工具来设置生成指定数量的句柄, 使其能够建立三级表</span></span><br><span class="line"><span class="comment">; Testlimit64.exe -h -c 4194304</span></span><br><span class="line"><span class="comment">; 4194304 即 0x00400000, 再乘以4就是最大句柄了. 然后我取了倒数第二个句柄 0x00fffff8 (0x00400000 * 4 - 8) </span></span><br><span class="line"></span><br><span class="line"><span class="comment">; 我们可以通过 !handle 验证下这个句柄</span></span><br><span class="line"></span><br><span class="line"><span class="number">1</span>: kd&gt; !handle <span class="number">0x00fffff8</span> <span class="number">0</span> 0n1184</span><br><span class="line"></span><br><span class="line">PROCESS ffffe00007d36080</span><br><span class="line"><span class="symbol">    SessionId:</span> <span class="number">1</span>  Cid: 04a0    Peb: 7ff5ffff9000  ParentCid: 0a40</span><br><span class="line"><span class="symbol">    DirBase:</span> 48b40000  ObjectTable: ffffc00002aade40  HandleCount: &lt;Data <span class="keyword">Not</span> Accessible&gt;</span><br><span class="line"><span class="symbol">    Image:</span> Testlimit64.exe</span><br><span class="line"></span><br><span class="line"><span class="symbol">fffff8:</span> Object: ffffe00003482190  GrantedAccess: <span class="number">00000000</span> (Inherit) (Audit)</span><br><span class="line"></span><br><span class="line"><span class="comment">; 那么有了句柄, 我们接下来就是先拆分各级 Index, 然后再得到 Entry</span></span><br><span class="line"></span><br><span class="line"><span class="number">1</span>: kd&gt; .formats <span class="number">0x00fffff8</span> </span><br><span class="line">Evaluate expression:</span><br><span class="line"><span class="symbol">  Hex:</span>     <span class="number">00000000</span><span class="string">`00fffff8</span></span><br><span class="line"><span class="string">  Decimal: 16777208</span></span><br><span class="line"><span class="string">  Octal:   0000000000000077777770</span></span><br><span class="line"><span class="string">  Binary:  00000000 00000000 00000000 00000000 00000000 11111111 11111111 11111000</span></span><br><span class="line"><span class="string">  Chars:   ........</span></span><br><span class="line"><span class="string">  Time:    Tue Jul 14 12:20:08 1970</span></span><br><span class="line"><span class="string">  Float:   low 2.35099e-038 high 0</span></span><br><span class="line"><span class="string">  Double:  8.28904e-317</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">; 那么, 可以得到各级索引为 </span></span><br><span class="line"><span class="string">; L0: i = 0x3f8</span></span><br><span class="line"><span class="string">; L1: j = 0x1ff</span></span><br><span class="line"><span class="string">; L2: k = 0x1f</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">; 然后我们得到句柄表</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">1: kd&gt; dtx _EPROCESS ffffe00007d36080 ObjectTable</span></span><br><span class="line"><span class="string">nt!_EPROCESS</span></span><br><span class="line"><span class="string">   +0x408 ObjectTable : 0xffffc000`</span>02aade40 _HANDLE_TABLE</span><br><span class="line"><span class="number">1</span>: kd&gt; <span class="built_in">dx</span> -<span class="built_in">r1</span> (*((ntkrnlmp!_HANDLE_TABLE *)<span class="number">0xffffc00002aade40</span>))</span><br><span class="line">(*((ntkrnlmp!_HANDLE_TABLE *)<span class="number">0xffffc00002aade40</span>))                 [Type: _HANDLE_TABLE]</span><br><span class="line">    [+<span class="number">0x000</span>] NextHandleNeedingPool : <span class="number">0x1010400</span> [Type: unsigned long]</span><br><span class="line">    [+<span class="number">0x004</span>] ExtraInfoPages   : <span class="number">0</span> [Type: long]</span><br><span class="line">-&gt;  [+<span class="number">0x008</span>] TableCode        : <span class="number">0xffffc00008705292</span> [Type: unsigned __int64]</span><br><span class="line">    [+<span class="number">0x010</span>] QuotaProcess     : <span class="number">0xffffe00007d36080</span> [Type: _EPROCESS *]</span><br><span class="line">    [+<span class="number">0x018</span>] HandleTableList  [Type: _LIST_ENTRY]</span><br><span class="line">    [+<span class="number">0x028</span>] UniqueProcessId  : <span class="number">0x4a0</span> [Type: unsigned long]</span><br><span class="line">    [+<span class="number">0x02c</span>] Flags            : <span class="number">0x8</span> [Type: unsigned long]</span><br><span class="line">    [+<span class="number">0x02c</span> ( <span class="number">0</span>: <span class="number">0</span>)] StrictFIFO       : <span class="number">0x0</span> [Type: unsigned char]</span><br><span class="line">    [+<span class="number">0x02c</span> ( <span class="number">1</span>: <span class="number">1</span>)] EnableHandleExceptions : <span class="number">0x0</span> [Type: unsigned char]</span><br><span class="line">    [+<span class="number">0x02c</span> ( <span class="number">2</span>: <span class="number">2</span>)] Rundown          : <span class="number">0x0</span> [Type: unsigned char]</span><br><span class="line">    [+<span class="number">0x02c</span> ( <span class="number">3</span>: <span class="number">3</span>)] Duplicated       : <span class="number">0x1</span> [Type: unsigned char]</span><br><span class="line">    [+<span class="number">0x030</span>] HandleContentionEvent [Type: _EX_PUSH_LOCK]</span><br><span class="line">    [+<span class="number">0x038</span>] HandleTableLock  [Type: _EX_PUSH_LOCK]</span><br><span class="line">    [+<span class="number">0x040</span>] FreeLists        [Type: _HANDLE_TABLE_FREE_LIST [<span class="number">1</span>]]</span><br><span class="line">    [+<span class="number">0x040</span>] ActualEntry      [Type: unsigned char [<span class="number">32</span>]]</span><br><span class="line">    [+<span class="number">0x060</span>] DebugInfo        : <span class="number">0x0</span> [Type: _HANDLE_TRACE_DEBUG_INFO *]</span><br><span class="line"><span class="number">1</span>: kd&gt; ?? <span class="number">0xffffc00008705292</span> &amp; (~<span class="number">3</span>)</span><br><span class="line">unsigned int64 <span class="number">0xffffc000</span><span class="string">`08705290</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">; 然后我们就能得到 Entry 了</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">1: kd&gt; ?? *(nt!_HANDLE_TABLE_ENTRY*)&amp;((char*)(((nt!_HANDLE_TABLE_ENTRY ***)0xffffc000`</span><span class="number">08705290</span>)[<span class="number">0x1f</span>][<span class="number">0x1ff</span>]))[<span class="number">0x3f8</span>*<span class="number">4</span>]</span><br><span class="line">struct _HANDLE_TABLE_ENTRY</span><br><span class="line">   +<span class="number">0x000</span> VolatileLowValue : 0n-<span class="number">2305839400881225727</span></span><br><span class="line">   +<span class="number">0x000</span> LowValue         : 0n-<span class="number">2305839400881225727</span></span><br><span class="line">   +<span class="number">0x000</span> InfoTable        : <span class="number">0xe0000348</span><span class="string">`21600001 _HANDLE_TABLE_ENTRY_INFO</span></span><br><span class="line"><span class="string">   +0x000 Unlocked         : 0y1</span></span><br><span class="line"><span class="string">   +0x000 RefCnt           : 0y0000000000000000 (0)</span></span><br><span class="line"><span class="string">   +0x000 Attributes       : 0y000</span></span><br><span class="line"><span class="string">-&gt; +0x000 ObjectPointerBits : 0y11100000000000000000001101001000001000010110 (0xe0000348216)</span></span><br><span class="line"><span class="string">   +0x008 HighValue        : 0n51539607552</span></span><br><span class="line"><span class="string">   +0x008 NextFreeHandleEntry : 0x0000000c`</span><span class="number">00000000</span> _HANDLE_TABLE_ENTRY</span><br><span class="line">   +<span class="number">0x008</span> LeafHandleValue  : _EXHANDLE</span><br><span class="line">   +<span class="number">0x008</span> GrantedAccessBits : <span class="number">0y0000000000000000000000000</span> (<span class="number">0</span>)</span><br><span class="line">   +<span class="number">0x008</span> NoRightsUpgrade  : <span class="number">0y0</span></span><br><span class="line">   +<span class="number">0x008</span> Spare            : <span class="number">0y000000</span> (<span class="number">0</span>)</span><br><span class="line">   +<span class="number">0x00c</span> TypeInfo         : <span class="number">0xc</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; 最后根据 Entry 得到对象, 0x30 即对象头大小</span></span><br><span class="line"></span><br><span class="line"><span class="number">1</span>: kd&gt; !object ((<span class="number">0xe0000348216</span> &lt;&lt; <span class="number">4</span>) | <span class="number">0xffff000000000000</span>) + <span class="number">0x30</span></span><br><span class="line"><span class="symbol">Object:</span> ffffe00003482190  Type: (ffffe00000090a10) Event</span><br><span class="line"><span class="symbol">    ObjectHeader:</span> ffffe00003482160 (new version)</span><br><span class="line"><span class="symbol">    HandleCount:</span> <span class="number">4194302</span>  PointerCount: <span class="number">4194303</span></span><br><span class="line">    Directory Object: ffffc00003cbceb0  Name: TestLimit</span><br></pre></td></tr></table></figure>
+
+<h2 id="对象名称"><a href="#对象名称" class="headerlink" title="对象名称"></a>对象名称</h2><p>在创建一群对象时, 一个重要的考虑是, 有必要设计一个成功的系统来跟踪记录这些对象. 为对象命名便是实现方案.</p>
+<p>为了提高效率, 对象管理器只在两种情况下才查找一个名称:</p>
+<ol>
+<li>当一个进程创建一个命名的对象时, 对象管理器在把新的名称存储到全局命名空间以前, 首先查找此名称. 排除重复.</li>
+<li>当一个进程打开一个指向命名对象的句柄时, 对象管理器查找该名称.</li>
+</ol>
+<h2 id="对象目录"><a href="#对象目录" class="headerlink" title="对象目录"></a>对象目录</h2><p>对象目录对象是对象管理器支持这种层次状命名结构的方法. 该对象类似于文件系统中的目录, 包含了其他对象的名称, 甚至可能包含其他的对象目录.</p>
+<p>对象的名称存储在哪里取决于对象的类型.</p>
+<p>标准对象目录:</p>
+<table>
+<thead>
+<tr>
+<th align="left">目录</th>
+<th align="left">所存储的对象名称的类型</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">\ArcNames</td>
+<td align="left">将 ARC 风格的路径映射到NT风格路径的符号链接</td>
+</tr>
+<tr>
+<td align="left">\BaseNamedObjects</td>
+<td align="left">全局的互斥体, 事件, 信号量, 可等待的定时器, ALPC 端口, 符号链接和内存区对象</td>
+</tr>
+<tr>
+<td align="left">\Callback</td>
+<td align="left">回调对象</td>
+</tr>
+<tr>
+<td align="left">\Device</td>
+<td align="left">设备对象</td>
+</tr>
+<tr>
+<td align="left">\Driver</td>
+<td align="left">驱动对象</td>
+</tr>
+<tr>
+<td align="left">\FileSystem</td>
+<td align="left">文件系统驱动程序对象和文件系统识别器设备对象. 过滤器管理器也在 Filters 子键下创建它自己的设备对象</td>
+</tr>
+<tr>
+<td align="left">\GLOBAL??</td>
+<td align="left">MS-DOS 设备名称 (\Session\0\DosDevices&lt;LUID&gt;\Global 目录是指向此目录的符号链接)</td>
+</tr>
+<tr>
+<td align="left">\KernelObjects</td>
+<td align="left">包含了可在某些特定条件下发出信号的事件对象: 低资源条件, 内存错误, 特定操作系统任务的完成; 也包含了代表会话的对象</td>
+</tr>
+<tr>
+<td align="left">\KnownDlls</td>
+<td align="left">已知DLL(在启动时由系统映射的DLL)的内存区名称和路径</td>
+</tr>
+<tr>
+<td align="left">\KnownDlls32</td>
+<td align="left">用于 Wow64 版本的已知DLL</td>
+</tr>
+<tr>
+<td align="left">\Nls</td>
+<td align="left">已映射的国家语言支持表的内存区名称</td>
+</tr>
+<tr>
+<td align="left">\ObjectTypes</td>
+<td align="left">对象类型的名称</td>
+</tr>
+<tr>
+<td align="left">\PSXSS</td>
+<td align="left">如果 UNIX 应用子系统被启用 (通过安装 SUA 组件), 则该目录包含了 UNIX 应用子系统所用到的 ALPC 端口</td>
+</tr>
+<tr>
+<td align="left">\RPC Control</td>
+<td align="left">远程过程调用所使用的 ALPC 端口, 和作为控制台隔离机制一部分的 Conhost.exe 所使用的事件</td>
+</tr>
+<tr>
+<td align="left">\Security</td>
+<td align="left">安全子系统的对象的名称所使用的 ALPC 端口和事件</td>
+</tr>
+<tr>
+<td align="left">\Sessions</td>
+<td align="left">针对每个会话的命名空间目录</td>
+</tr>
+<tr>
+<td align="left">\UMDFCommunicationPorts</td>
+<td align="left">用户模式驱动程序框架 (UMDF) 使用的 ALPC 端口</td>
+</tr>
+<tr>
+<td align="left">\Windows</td>
+<td align="left">Windows 子系统的 ALPC 端口, 共享的内存区和窗口站</td>
+</tr>
+</tbody></table>
+<p>因为注入互斥体, 事件, 信号量, 可等待的定时器, 以及内存区这些基本内核对象将它们的名称存储在同一个对象目录下, 所以对象名称有可能被占用 (或者占坑攻击).</p>
+<p>Windows 采用了私有命名空间的概念来缓解这一问题. 它允许用户模式应用可以通过 <code>CreatePrivateNamespace</code> API 来创建对象目录, 并将对象目录关联上边界描述符.<br>这里的边界描述符是一些用来保护这些目录的特殊数据结构, 其中包含了代表那些安全个体可以访问这些目录的 SID. 类似安全描述符.</p>
+<h3 id="对象目录结构"><a href="#对象目录结构" class="headerlink" title="对象目录结构"></a>对象目录结构</h3><figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span>: kd&gt; dtx _OBJECT_DIRECTORY</span><br><span class="line">nt!_OBJECT_DIRECTORY</span><br><span class="line">   +<span class="number">0x000</span> HashBuckets      : [<span class="number">37</span>] Ptr64 _OBJECT_DIRECTORY_ENTRY</span><br><span class="line">   +<span class="number">0x128</span> <span class="keyword">Lock</span>             : _EX_PUSH_LOCK</span><br><span class="line">   +<span class="number">0x130</span> DeviceMap        : Ptr64 _DEVICE_MAP</span><br><span class="line">   +<span class="number">0x130</span> ShadowDirectory  : Ptr64 _OBJECT_DIRECTORY</span><br><span class="line">   +<span class="number">0x138</span> SessionId        : Uint4B</span><br><span class="line">   +<span class="number">0x140</span> NamespaceEntry   : Ptr64 Void</span><br><span class="line">   +<span class="number">0x148</span> Flags            : Uint4B</span><br><span class="line"></span><br><span class="line"><span class="number">1</span>: kd&gt; dtx _OBJECT_DIRECTORY_ENTRY</span><br><span class="line">nt!_OBJECT_DIRECTORY_ENTRY</span><br><span class="line">   +<span class="number">0x000</span> ChainLink        : Ptr64 _OBJECT_DIRECTORY_ENTRY</span><br><span class="line">   +<span class="number">0x008</span> Object           : Ptr64 Void</span><br><span class="line">   +<span class="number">0x010</span> HashValue        : Uint4B</span><br></pre></td></tr></table></figure>
+
+<p>目录对象是一个有 37 个数组元素组成的哈希树,数组元素的类型是 <code>_OBJECT_DIRECTORY_ENTRY</code>.</p>
+<p>我们以 “&quot;(<code>ObpRootDirectoryObject</code>) 根目录对象来看一下对象目录结构</p>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span>: kd&gt; <span class="built_in">dq</span> ObpRootDirectoryObject L1</span><br><span class="line">fffff803<span class="string">`03e51d90  ffffc000`</span>000090f0</span><br><span class="line"></span><br><span class="line"><span class="number">1</span>: kd&gt; dtx _OBJECT_DIRECTORY ffffc000<span class="string">`000090f0</span></span><br><span class="line"><span class="string">(*((_OBJECT_DIRECTORY *)0xffffc000000090f0))                 [Type: _OBJECT_DIRECTORY]</span></span><br><span class="line"><span class="string">    [+0x000] HashBuckets      [Type: _OBJECT_DIRECTORY_ENTRY * [37]]</span></span><br><span class="line"><span class="string">    [+0x128] Lock             [Type: _EX_PUSH_LOCK]</span></span><br><span class="line"><span class="string">    [+0x130] DeviceMap        : 0x0 [Type: _DEVICE_MAP *]</span></span><br><span class="line"><span class="string">    [+0x130] ShadowDirectory  : 0x0 [Type: _OBJECT_DIRECTORY *]</span></span><br><span class="line"><span class="string">    [+0x138] SessionId        : 0xffffffff [Type: unsigned long]</span></span><br><span class="line"><span class="string">    [+0x140] NamespaceEntry   : 0x0 [Type: void *]</span></span><br><span class="line"><span class="string">    [+0x148] Flags            : 0x0 [Type: unsigned long]</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">1: kd&gt; dx -r1 (*((ntkrnlmp!_OBJECT_DIRECTORY_ENTRY * (*)[37])0xffffc000000090f0))</span></span><br><span class="line"><span class="string">(*((ntkrnlmp!_OBJECT_DIRECTORY_ENTRY * (*)[37])0xffffc000000090f0))                 [Type: _OBJECT_DIRECTORY_ENTRY * [37]]</span></span><br><span class="line"><span class="string">    [0]              : 0x0 [Type: _OBJECT_DIRECTORY_ENTRY *]</span></span><br><span class="line"><span class="string">    [1]              : 0xffffc000011e45d0 [Type: _OBJECT_DIRECTORY_ENTRY *]</span></span><br><span class="line"><span class="string">    ... ; 省略</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">1: kd&gt; dx -r1 (*((ntkrnlmp!_OBJECT_DIRECTORY_ENTRY *)0xffffc000011e45d0))</span></span><br><span class="line"><span class="string">(*((ntkrnlmp!_OBJECT_DIRECTORY_ENTRY *)0xffffc000011e45d0))                 [Type: _OBJECT_DIRECTORY_ENTRY]</span></span><br><span class="line"><span class="string">    [+0x000] ChainLink        : 0xffffc0000000cd50 [Type: _OBJECT_DIRECTORY_ENTRY *]</span></span><br><span class="line"><span class="string">    [+0x008] Object           : 0xffffe00007c29fc0 [Type: void *]</span></span><br><span class="line"><span class="string">    [+0x010] HashValue        : 0xb8888f8d [Type: unsigned long]</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">1: kd&gt; dx -r1 (*((ntkrnlmp!_OBJECT_DIRECTORY_ENTRY *)0xffffc0000000cd50))</span></span><br><span class="line"><span class="string">(*((ntkrnlmp!_OBJECT_DIRECTORY_ENTRY *)0xffffc0000000cd50))                 [Type: _OBJECT_DIRECTORY_ENTRY]</span></span><br><span class="line"><span class="string">    [+0x000] ChainLink        : 0x0 [Type: _OBJECT_DIRECTORY_ENTRY *]</span></span><br><span class="line"><span class="string">    [+0x008] Object           : 0xffffc0000000ce00 [Type: void *]</span></span><br><span class="line"><span class="string">    [+0x010] HashValue        : 0x6c1c47fb [Type: unsigned long]</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">1: kd&gt; !object 0xffffe00007c29fc0 </span></span><br><span class="line"><span class="string">Object: ffffe00007c29fc0  Type: (ffffe00000070b60) Mutant</span></span><br><span class="line"><span class="string">    ObjectHeader: ffffe00007c29f90 (new version)</span></span><br><span class="line"><span class="string">    HandleCount: 0  PointerCount: 1</span></span><br><span class="line"><span class="string">    Directory Object: ffffc000000090f0  Name: PendingRenameMutex</span></span><br></pre></td></tr></table></figure>
+
+<p>Directory 下的所有对象通过一个 Hash 算法定位其在 HashBuckets 的哪条链表中, <code>_OBJECT_DIRECTORY_ENTRY</code> 通过 ChainLink 组成链表, 如果为 NULL 则表示为该链表最后一个项.</p>
+<h2 id="内核池"><a href="#内核池" class="headerlink" title="内核池"></a>内核池</h2><p>内核池是可以被分割为更小块的用于存储任何类型的数据–内核模式组件(NT内核模块, 第三方设备驱动等等), 请求的一系列内存.<br>与堆比较相似, 每个分配的块都有一个包含统计和调试信息的头(<code>_POOL_HEADER</code>), 我们可以使用这些额外的数据来推断出该内存块属于哪个驱动程序, 并且我们还可以在一定程序上推断出包含该分配内存的结构或者对象的类型.</p>
+<p><img src="pool.jpg" alt="池中的执行体对象"></p>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span>: kd&gt; dtx _POOL_HEADER</span><br><span class="line">nt!_POOL_HEADER</span><br><span class="line">   +<span class="number">0x000</span> PreviousSize     : Pos <span class="number">0</span>, <span class="number">8</span> <span class="meta">Bits</span></span><br><span class="line">   +<span class="number">0x000</span> PoolIndex        : Pos <span class="number">8</span>, <span class="number">8</span> <span class="meta">Bits</span></span><br><span class="line">   +<span class="number">0x002</span> BlockSize        : Pos <span class="number">0</span>, <span class="number">8</span> <span class="meta">Bits</span>      <span class="comment">; 分配总的大小, 包含池头部, 对象头部, 以及其他可选的头部</span></span><br><span class="line">   +<span class="number">0x002</span> PoolType         : Pos <span class="number">8</span>, <span class="number">8</span> <span class="meta">Bits</span>      <span class="comment">; 系统内存的类型(_POOL_TYPE, 分页,非分页的, 等等)</span></span><br><span class="line">   +<span class="number">0x000</span> Ulong1           : Uint4B</span><br><span class="line">   +<span class="number">0x004</span> PoolTag          : Uint4B             <span class="comment">; 内存 Tag, 仅执行体对象来说, 标志是从 _OBJECT_TYPE.Key 中得到的</span></span><br><span class="line">   +<span class="number">0x008</span> ProcessBilled    : Ptr64 _EPROCESS</span><br><span class="line">   +<span class="number">0x008</span> AllocatorBackTraceIndex : Uint2B</span><br><span class="line">   +<span class="number">0x00a</span> PoolTagHash      : Uint2B</span><br></pre></td></tr></table></figure>
+
+<p>Windows 8.1 具有 46 种不同类型的内核对象, 所有这些内核对象都从两个池中的一个池分配, 即PagedPool和NonPagedPoolNx. 下面我们对每个对象的池类型做个总结</p>
+<p>在前面, 我们学习过了对象目录, 所以我们可以直接使用 Windbg 的 <code>!object \ObjectTypes</code> 命令列出所有对象类型, 并查看其中一些对象的池类型</p>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span>: kd&gt; !object \ObjectTypes</span><br><span class="line"><span class="symbol">Object:</span> ffffc0000000ce00  Type: (ffffe00000097d60) Directory</span><br><span class="line"><span class="symbol">    ObjectHeader:</span> ffffc0000000cdd0 (new version)</span><br><span class="line"><span class="symbol">    HandleCount:</span> <span class="number">0</span>  PointerCount: <span class="number">48</span></span><br><span class="line">    Directory Object: ffffc000000090f0  Name: ObjectTypes</span><br><span class="line"></span><br><span class="line">    Hash Address          Type                      Name</span><br><span class="line">    ---- -------          ----                      ----</span><br><span class="line">     <span class="number">00</span>  ffffe000001bb5d0 Type                      TmTm</span><br><span class="line">     <span class="number">01</span>  ffffe000001779a0 Type                      Desktop</span><br><span class="line">         ffffe0000008b080 Type                      Process</span><br><span class="line">     <span class="number">03</span>  ffffe00000082080 Type                      DebugObject</span><br><span class="line">     <span class="number">04</span>  ffffe000001776e0 Type                      TpWorkerFactory</span><br><span class="line">     <span class="number">05</span>  ffffe000001baf20 Type                      Adapter</span><br><span class="line">         ffffe000000547e0 Type                      Token</span><br><span class="line">     <span class="number">06</span>  ffffe00007731a60 Type                      DxgkSharedResource</span><br><span class="line">     <span class="number">09</span>  ffffe00005ddbb10 Type                      PcwObject</span><br><span class="line">         ffffe0000305fa20 Type                      WmiGuid</span><br><span class="line">     <span class="number">11</span>  ffffe0000305ea20 Type                      EtwRegistration</span><br><span class="line">     <span class="number">12</span>  ffffe000001c89c0 Type                      Session</span><br><span class="line">         ffffe00000165d50 Type                      Timer</span><br><span class="line">     <span class="number">13</span>  ffffe00000070b60 Type                      Mutant</span><br><span class="line">     <span class="number">14</span>  ffffe00000177f20 Type                      IRTimer</span><br><span class="line">     <span class="number">16</span>  ffffe000001ba9a0 Type                      IoCompletion</span><br><span class="line">     <span class="number">17</span>  ffffe0000779df20 Type                      DxgkSharedSyncObject</span><br><span class="line">         ffffe00000177b00 Type                      WindowStation</span><br><span class="line">         ffffe00000177dc0 Type                      Profile</span><br><span class="line">     <span class="number">18</span>  ffffe000001bbf20 Type                      File</span><br><span class="line">     <span class="number">21</span>  ffffe00000165eb0 Type                      Semaphore</span><br><span class="line">     <span class="number">23</span>  ffffe00003066a20 Type                      EtwConsumer</span><br><span class="line">         ffffe00000177840 Type                      Composition</span><br><span class="line">     <span class="number">25</span>  ffffe000001bb470 Type                      TmTx</span><br><span class="line">         ffffe00000055b00 Type                      SymbolicLink</span><br><span class="line">     <span class="number">26</span>  ffffe00005d8b5b0 Type                      FilterConnectionPort</span><br><span class="line">         ffffe00003001ba0 Type                      Key</span><br><span class="line">         ffffe00000177c60 Type                      KeyedEvent</span><br><span class="line">         ffffe000001774e0 Type                      Callback</span><br><span class="line">     <span class="number">27</span>  ffffe000001bb080 Type                      WaitCompletionPacket</span><br><span class="line">     <span class="number">28</span>  ffffe0000008ff20 Type                      UserApcReserve</span><br><span class="line">         ffffe00000071520 Type                      Job</span><br><span class="line">     <span class="number">29</span>  ffffe000001badc0 Type                      Controller</span><br><span class="line">         ffffe000000986f0 Type                      IoCompletionReserve</span><br><span class="line">     <span class="number">30</span>  ffffe000001bac60 Type                      Device</span><br><span class="line">         ffffe00000097d60 Type                      Directory</span><br><span class="line">     <span class="number">31</span>  ffffe000001c8b20 Type                      <span class="meta">Section</span></span><br><span class="line">         ffffe000001c8f20 Type                      TmEn</span><br><span class="line">         ffffe00000098f20 Type                      Thread</span><br><span class="line">     <span class="number">32</span>  ffffe00000099610 Type                      Type</span><br><span class="line">     <span class="number">33</span>  ffffe00005d8b450 Type                      FilterCommunicationPort</span><br><span class="line">         ffffe0000305df20 Type                      PowerRequest</span><br><span class="line">     <span class="number">35</span>  ffffe000001bb310 Type                      TmRm</span><br><span class="line">         ffffe00000090a10 Type                      Event</span><br><span class="line">     <span class="number">36</span>  ffffe00003058f20 Type                      ALPC Port</span><br><span class="line">         ffffe000001bab00 Type                      Driver</span><br><span class="line"></span><br><span class="line"><span class="number">1</span>: kd&gt; dtx _OBJECT_TYPE ffffe000001bb5d0 TypeInfo.PoolType</span><br><span class="line">USBXHCI!_OBJECT_TYPE</span><br><span class="line">   +<span class="number">0x040</span> TypeInfo          : </span><br><span class="line">      +<span class="number">0x024</span> PoolType          : <span class="number">200</span> ( NonPagedPoolNx )</span><br><span class="line"></span><br><span class="line"><span class="number">1</span>: kd&gt; dtx _OBJECT_TYPE ffffe000000547e0 TypeInfo.PoolType</span><br><span class="line">USBXHCI!_OBJECT_TYPE</span><br><span class="line">   +<span class="number">0x040</span> TypeInfo          : </span><br><span class="line">      +<span class="number">0x024</span> PoolType          : <span class="number">1</span> ( PagedPool )</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>另外说一下, <code>!object \ObjectTypes</code> 命令中, 列出的 hash 值实际上就是 <code>\ObjectTypes</code> 对象目录中, HashBuckets 里面的数组索引.</p>
+</blockquote>
+<p>那么我已经总结好成一张表格了</p>
+<table>
+<thead>
+<tr>
+<th align="left">Pool Type</th>
+<th align="left">Object</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">NonPagedPoolNx</td>
+<td align="left">TmTm, Desktop, Process, DebugObject, TpWorkerFactory, Adapter, WmiGuid, EtwRegistration, Session, Timer, Mutant, IRTimer, IoCompletion, WindowStation, Profile, File, Semaphore, EtwConsumer, CompositionSurface, TmTx, FilterConnectionPort, Callback, WaitCompletionPacket, UserApcReserve, Job, Controller, IoCompletionReserve, Device, TmEn, Thread, Type, FilterCommunicationPort, PowerRequest, TmRm, Event, ALPC Port, Driver</td>
+</tr>
+<tr>
+<td align="left">PagedPool</td>
+<td align="left">Token, DxgkSharedResource, PcwObject, DxgkSharedSyncObject, SymbolicLink, Key, KeyedEvent, Directory, Section</td>
+</tr>
+</tbody></table>
+<h2 id="引用参考"><a href="#引用参考" class="headerlink" title="引用参考"></a>引用参考</h2><blockquote>
+<p><span class="exturl" data-url="aHR0cDovL3d3dy5mcmVlYnVmLmNvbS9zZWN0b29sLzEyNDgwMC5odG1s" title="http://www.freebuf.com/sectool/124800.html">利用Volatility进行Windows内存取证分析(二)：内核对象、内核池学习小记<i class="fa fa-external-link"></i></span><br><span class="exturl" data-url="aHR0cDovL3d3dy5jb2RlbWFjaGluZS5jb20vYXJ0aWNsZV9vYmplY3RoZWFkZXIuaHRtbA==" title="http://www.codemachine.com/article_objectheader.html">Windows 7 Object Headers<i class="fa fa-external-link"></i></span></p>
+</blockquote>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+      <div>
+        <div id="reward-container">
+  <div>如果喜欢, 请给我加个🍗. 谢谢!!</div>
+  <button id="reward-button" disable="enable" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+
+    
+      
+      
+        
+      
+      <div style="display: inline-block">
+        <img src="/Blog/uploads/alipay.jpg" alt="Miro 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        
+
+
+
+
+  
+
+
+
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Miro</li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    
+    <a href="https://mirokaku.github.io/Blog/2017/4-Object-Management/" title="Windows kernel learning: 4. Object Management">https://mirokaku.github.io/Blog/2017/4-Object-Management/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC8="><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</span> 许可协议。转载请注明出处！</li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/Blog/tags/Windows/" rel="tag"># Windows</a>
+          
+            <a href="/Blog/tags/Kernel/" rel="tag"># Kernel</a>
+          
+        </div>
+      
+
+      
+      
+        <div class="post-widgets">
+        
+
+        
+
+        
+          
+          <div class="social_share">
+            
+            
+              <div id="needsharebutton-postbottom">
+                <span class="btn">
+                  <i class="fa fa-share-alt" aria-hidden="true"></i>
+                </span>
+              </div>
+            
+            
+          </div>
+        
+        </div>
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/Blog/2017/PDU-Encode/" rel="next" title="PDU 编码规则">
+                <i class="fa fa-chevron-left"></i> PDU 编码规则
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/Blog/2017/5-Process-and-Thread/" rel="prev" title="Windows kernel learning: 5. Process, Thread and Jobs">
+                Windows kernel learning: 5. Process, Thread and Jobs <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="gitalk-container">
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/Blog/uploads/avatar.png" alt="Miro">
+            
+              <p class="site-author-name" itemprop="name">Miro</p>
+              <div class="site-description motion-element" itemprop="description">喵喵喵?</div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/Blog/archives/">
+                
+                    <span class="site-state-item-count">16</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">6</span>
+                    <span class="site-state-item-name">分类</span>
+                  
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">13</span>
+                    <span class="site-state-item-name">标签</span>
+                  
+                </div>
+              
+            </nav>
+          
+
+          
+            <div class="feed-link motion-element">
+              <a href="/Blog/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+
+          
+
+          
+             <div class="cc-license motion-element" itemprop="license">
+              
+              
+                
+              
+              
+              
+              <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC8="><img src="/Blog/images/cc-by-nc-sa.svg" alt="Creative Commons"></span>
+             </div>
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Windows-NT-暴露的执行对象"><span class="nav-number">1.</span> <span class="nav-text">Windows NT 暴露的执行对象</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#对象结构"><span class="nav-number">2.</span> <span class="nav-text">对象结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#对象头"><span class="nav-number">3.</span> <span class="nav-text">对象头</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#对象头中的域"><span class="nav-number">3.1.</span> <span class="nav-text">对象头中的域</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#对象-Flags"><span class="nav-number">3.2.</span> <span class="nav-text">对象 Flags</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#可选对象头"><span class="nav-number">4.</span> <span class="nav-text">可选对象头</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#“对象类型”-对象-OBJECT-TYPE"><span class="nav-number">5.</span> <span class="nav-text">“对象类型” 对象 (_OBJECT_TYPE)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#对象方法"><span class="nav-number">6.</span> <span class="nav-text">对象方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#对象句柄和进程句柄表"><span class="nav-number">7.</span> <span class="nav-text">对象句柄和进程句柄表</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#句柄结构"><span class="nav-number">7.1.</span> <span class="nav-text">句柄结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#句柄表结构"><span class="nav-number">7.2.</span> <span class="nav-text">句柄表结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#句柄表项结构"><span class="nav-number">7.3.</span> <span class="nav-text">句柄表项结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#用-Windbg-从-Handle-得到-Object"><span class="nav-number">7.4.</span> <span class="nav-text">用 Windbg 从 Handle 得到 Object</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#对象名称"><span class="nav-number">8.</span> <span class="nav-text">对象名称</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#对象目录"><span class="nav-number">9.</span> <span class="nav-text">对象目录</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#对象目录结构"><span class="nav-number">9.1.</span> <span class="nav-text">对象目录结构</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#内核池"><span class="nav-number">10.</span> <span class="nav-text">内核池</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#引用参考"><span class="nav-number">11.</span> <span class="nav-text">引用参考</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Miro</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <span class="exturl theme-link" data-url="aHR0cHM6Ly9oZXhvLmlv">Hexo</span> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <span class="exturl theme-link" data-url="aHR0cHM6Ly90aGVtZS1uZXh0Lm9yZw==">NexT.Gemini</span> v7.1.1</div>
+
+
+
+
+        
+
+
+  <script>
+    var _mtac = {};
+    (function() {
+      var mta = document.createElement("script");
+      mta.src = "https://pingjs.qq.com/h5/stats.js";
+      mta.setAttribute("name", "MTAH5");
+      mta.setAttribute("sid", "500683073");
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(mta, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script src="/Blog/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/Blog/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/Blog/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script src="/Blog/lib/fancybox/source/jquery.fancybox.pack.js"></script>
+
+  
+  <script src="/Blog/lib/reading_progress/reading_progress.js"></script>
+
+
+  
+
+
+  <script src="/Blog/js/utils.js?v=7.1.1"></script>
+
+  <script src="/Blog/js/motion.js?v=7.1.1"></script>
+
+
+
+  
+  
+
+
+  <script src="/Blog/js/affix.js?v=7.1.1"></script>
+
+  <script src="/Blog/js/schemes/pisces.js?v=7.1.1"></script>
+
+
+
+
+  
+  <script src="/Blog/js/scrollspy.js?v=7.1.1"></script>
+<script src="/Blog/js/post-details.js?v=7.1.1"></script>
+
+
+
+  
+
+
+  <script src="/Blog/js/next-boot.js?v=7.1.1"></script>
+
+
+  
+
+  
+  <script src="/Blog/js/exturl.js?v=7.1.1"></script>
+
+
+  
+  
+  
+
+  
+
+  
+  
+  
+
+
+  
+
+
+  
+    
+
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+
+
+<script src="//cdn.jsdelivr.net/npm/js-md5@0.7.3/src/md5.min.js"></script>
+
+<script>
+  var gitalk = new Gitalk({
+    clientID: '7fdb7c3db43b443fd9d0',
+    clientSecret: 'ca5448f06e8b2651d1a1237d508874c0c7773da0',
+    repo: 'Blog',
+    owner: 'MiroKaku',
+    admin: ['MiroKaku'],
+    id: md5(location.pathname),
+    
+      language: window.navigator.language || window.navigator.userLanguage,
+    
+    distractionFreeMode: 'true'
+  });
+  gitalk.render('gitalk-container');
+</script>
+
+  
+
+
+  
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/Blog/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/Blog/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/Blog/js/algolia-search.js?v=7.1.1"></script>
+
+
+
+  
+  
+  <script>
+    
+    function addCount(Counter) {
+      var $visitors = $('.leancloud_visitors');
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url }) })
+        .done(function({ results }) {
+          if (results.length > 0) {
+            var counter = results[0];
+            
+              var $element = $(document.getElementById(url));
+              $element.find('.leancloud-visitors-count').text(counter.time + 1);
+            
+            Counter('put', '/classes/Counter/' + counter.objectId, JSON.stringify({ time: { '__op': 'Increment', 'amount': 1 } }))
+            
+              .fail(function ({ responseJSON }) {
+                console.log('Failed to save Visitor num, with error message: ' + responseJSON.error);
+              })
+          } else {
+            
+              var $element = $(document.getElementById(url));
+              $element.find('.leancloud-visitors-count').text('Counter not initialized! More info at console err msg.');
+              console.error('ATTENTION! LeanCloud counter has security bug, see how to solve it here: https://github.com/theme-next/hexo-leancloud-counter-security. \n However, you can still use LeanCloud without security, by setting `security` option to `false`.');
+            
+          }
+        })
+        .fail(function ({ responseJSON }) {
+          console.log('LeanCloud Counter Error: ' + responseJSON.code + ' ' + responseJSON.error);
+        });
+    }
+    
+
+    $(function() {
+      $.get('https://app-router.leancloud.cn/2/route?appId=' + 'tdBeFC5dcAqjaQszk8bS79EO-gzGzoHsz')
+        .done(function({ api_server }) {
+          var Counter = function(method, url, data) {
+            return $.ajax({
+              method: method,
+              url: 'https://' + api_server + '/1.1' + url,
+              headers: {
+                'X-LC-Id': 'tdBeFC5dcAqjaQszk8bS79EO-gzGzoHsz',
+                'X-LC-Key': 'RDlwA8qFUcpCLjA8QvyqcYOj',
+                'Content-Type': 'application/json',
+              },
+              data: data
+            });
+          };
+          
+            addCount(Counter);
+          
+        });
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/Blog/lib/needsharebutton/needsharebutton.js"></script>
+  <script>
+    
+      pbOptions = {};
+      
+        pbOptions.iconStyle = "default";
+      
+        pbOptions.boxForm = "horizontal";
+      
+        pbOptions.position = "bottomCenter";
+      
+        pbOptions.networks = "Weibo,Wechat,Twitter,GoogleBookmarks,Evernote";
+      
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+    
+    
+  </script>
+
+
+  
+
+  
+
+  
+
+  
+<script>
+  $('.highlight').not('.gist .highlight').each(function(i, e) {
+    var $wrap = $('<div>').addClass('highlight-wrap');
+    $(e).after($wrap);
+    $wrap.append($('<button>').addClass('copy-btn').append('复制').on('click', function(e) {
+      var code = $(this).parent().find('.code').find('.line').map(function(i, e) {
+        return $(e).text();
+      }).toArray().join('\n');
+      var ta = document.createElement('textarea');
+      var yPosition = window.pageYOffset || document.documentElement.scrollTop;
+      ta.style.top = yPosition + 'px'; // Prevent page scroll
+      ta.style.position = 'absolute';
+      ta.style.opacity = '0';
+      ta.readOnly = true;
+      ta.value = code;
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, code.length);
+      ta.readOnly = false;
+      var result = document.execCommand('copy');
+      
+        if (result) $(this).text('复制成功');
+        else $(this).text('复制失败');
+      
+      ta.blur(); // For iOS
+      $(this).blur();
+    })).on('mouseleave', function(e) {
+      var $b = $(this).find('.copy-btn');
+      setTimeout(function() {
+        $b.text('复制');
+      }, 300);
+    }).append(e);
+  })
+</script>
+
+
+  
+
+  
+
+</body>
+</html>
