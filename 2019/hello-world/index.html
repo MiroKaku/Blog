@@ -26,6 +26,10 @@
 
 
 
+  
+  
+  <link rel="stylesheet" href="/Blog/lib/Han/dist/han.min.css?v=3.3">
+
 
 
   <meta http-equiv="Cache-Control" content="no-transform">
@@ -141,6 +145,17 @@
 
 
 
+
+  <script async src="//www.googletagmanager.com/gtag/js?id=UA-140330910-1"></script>
+  <script>
+    var host = window.location.hostname;
+    if (host !== "localhost" || !true) {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-140330910-1');
+    }
+  </script>
 
 
 
@@ -306,6 +321,8 @@
   
 
   
+    <div class="reading-progress-bar"></div>
+  
 
   <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
   
@@ -384,7 +401,7 @@
     
     
     
-    <div class="post-body" itemprop="articleBody">
+    <div class="post-body han-init-context" itemprop="articleBody">
 
       
       
@@ -709,6 +726,8 @@
 
 
 
+  
+
 
 
   
@@ -722,6 +741,9 @@
 
   
   <script src="/Blog/lib/fancybox/source/jquery.fancybox.pack.js"></script>
+
+  
+  <script src="/Blog/lib/reading_progress/reading_progress.js"></script>
 
 
   
@@ -763,6 +785,15 @@
 
 
   
+  
+  
+
+  
+
+  
+  
+  
+
 
   
 
