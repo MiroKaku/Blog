@@ -1,0 +1,107 @@
+;
+; Template.inf
+;
+
+; INF-MSDN:
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/roadmap-for-device-and-driver-installation--windows-vista-and-later-
+
+; Class 填写驱动对应的类名
+; ClassGuid 填写类名对应的 GUID
+; MSDN: 
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/ifs/file-system-filter-driver-classes-and-class-guids
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/system-defined-device-setup-classes-available-to-vendors
+; DriverVer 填写编译日期
+
+[Version]
+Signature   = "$WINDOWS NT$"
+Class       = AntiVirus
+ClassGuid   = {b1d1a169-c54f-4379-81db-bee7d88d7454}
+Provider    = %ManufacturerName%
+CatalogFile = %DriverName%.cat
+DriverVer   = 08/02/2018
+
+;*************************************
+
+[DestinationDirs]
+DefaultDestDir = 12
+
+[SourceDisksNames]
+1 = %DiskId%,,,""
+
+; 这里文件名不能用 %% 宏来替换
+; 这里指定的文件一定要和生成的文件名一致
+; 如果没有多个版本请自行删除不存在的文件
+; MSDN:
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-sourcedisksfiles-section
+[SourceDisksFiles]
+Template.sys     = 1,,
+Template.x86.sys = 1,,
+Template.x64.sys = 1,,
+
+; CopyFiles MSDN: 
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-copyfiles-directive
+[Files.Copy.NTx86]
+%DriverName%.sys,%DriverName%.x86.sys,,0x00004020 ; COPYFLG_IN_USE_RENAME | COPYFLG_NO_VERSION_DIALOG
+
+[Files.Copy.NTamd64]
+%DriverName%.sys,%DriverName%.x64.sys,,0x00004020
+
+; DelFiles MSDN:
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-delfiles-directive
+[Files.Del]
+%DriverName%.sys
+
+;*************************************
+
+[DefaultInstall.NTx86]
+CopyFiles=Files.Copy.NTx86
+
+[DefaultInstall.NTamd64]
+CopyFiles=Files.Copy.NTamd64
+
+; AddService MSDN:
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-addservice-directive
+[DefaultInstall.NTx86.Services]
+AddService = %ServiceName%,%ServicInstFlags%, ServiceInstall
+
+[DefaultInstall.NTamd64.Services]
+AddService = %ServiceName%,%ServicInstFlags%, ServiceInstall
+
+[DefaultUninstall.NTx86]
+DelFiles   = Files.Del
+
+[DefaultUninstall.NTamd64]
+DelFiles   = Files.Del
+
+; DelService MSDN:
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-delservice-directive
+[DefaultUninstall.NTx86.Services]
+DelService = %ServiceName%,0x200
+
+[DefaultUninstall.NTamd64.Services]
+DelService = %ServiceName%,0x200
+
+;*************************************
+
+[ServiceInstall]
+DisplayName    = %ServiceName%
+Description    = %ServiceDesc%
+ServiceBinary  = %12%\%DriverName%.sys
+ServiceType    = 1                  ; SERVICE_KERNEL_DRIVER
+StartType      = 3                  ; 0 = SERVICE_BOOT_START
+                                    ; 1 = SERVICE_SYSTEM_START
+                                    ; 2 = SERVICE_AUTO_START
+                                    ; 3 = SERVICE_DEMAND_START
+                                    ; 4 = SERVICE_DISABLED
+ErrorControl   = 1                  ; SERVICE_ERROR_NORMAL
+
+;*************************************
+
+[Strings]
+ServicInstFlags         = 0x00000000    ; https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-addservice-directive
+                                        ; 0x00000800 = SPSVCSINST_STARTSERVICE, 安装后立即启动服务
+ManufacturerName        = "Template"
+DriverName              = "Template"
+ServiceDesc             = "Template INF"
+ServiceName             = "Template"
+DiskId                  = "Template Device Installation Disk"
