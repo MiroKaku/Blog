@@ -1,57 +1,73 @@
+;-------------------------------------------------------------------------
+; Template.INF -- NT Legacy Driver
 ;
-; Template.inf
-;
+; Copyright (c) 2019, Microsoft.Com LLC.  All rights reserved.
+;------------------------------------------------------------------------
 
-; INF-MSDN:
+; INF MSDN:
 ;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/roadmap-for-device-and-driver-installation--windows-vista-and-later-
-
-; Class 填写驱动对应的类名
-; ClassGuid 填写类名对应的 GUID
-; MSDN: 
+;
+; Class And ClassGuid MSDN:
 ;     https://docs.microsoft.com/en-us/windows-hardware/drivers/ifs/file-system-filter-driver-classes-and-class-guids
 ;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/system-defined-device-setup-classes-available-to-vendors
-; DriverVer 填写编译日期
-
 [Version]
 Signature   = "$WINDOWS NT$"
 Class       = AntiVirus
 ClassGuid   = {b1d1a169-c54f-4379-81db-bee7d88d7454}
 Provider    = %ManufacturerName%
 CatalogFile = %DriverName%.cat
-DriverVer   = 08/02/2018
+DriverVer   = 08/02/2018,9.43.55.74
 
-;*************************************
 
+;-------------------------------------------------------------------------
+; Installation Section
+;-------------------------------------------------------------------------
+
+
+; DestinationDirs MSDN
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-destinationdirs-section
 [DestinationDirs]
-DefaultDestDir = 12
+DefaultDestDir      = 12
 
+
+; SourceDisksNames MSDN
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-sourcedisksnames-section
 [SourceDisksNames]
 1 = %DiskId%,,,""
 
-; 这里文件名不能用 %% 宏来替换
-; 这里指定的文件一定要和生成的文件名一致
-; 如果没有多个版本请自行删除不存在的文件
-; MSDN:
+
+; SourceDisksFiles MSDN
 ;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-sourcedisksfiles-section
+; Each filename entry must specify the exact name of a file on the source disk. 
+;     You cannot use a %strkey% token to specify the file name.
 [SourceDisksFiles]
 Template.sys     = 1,,
+
+[SourceDisksFiles.x86]
 Template.x86.sys = 1,,
+
+[SourceDisksFiles.amd64]
 Template.x64.sys = 1,,
 
-; CopyFiles MSDN: 
+
+; Copyfiles MSDN:
 ;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-copyfiles-directive
 [Files.Copy.NTx86]
-%DriverName%.sys,%DriverName%.x86.sys,,0x00004020 ; COPYFLG_IN_USE_RENAME | COPYFLG_NO_VERSION_DIALOG
+%DriverName%.sys,%DriverName%.x86.sys,,0x00004022 ; COPYFLG_NOSKIP | COPYFLG_NO_VERSION_DIALOG | COPYFLG_IN_USE_RENAME
 
 [Files.Copy.NTamd64]
-%DriverName%.sys,%DriverName%.x64.sys,,0x00004020
+%DriverName%.sys,%DriverName%.x64.sys,,0x00004022
 
-; DelFiles MSDN:
+; Delfiles MSDN:
 ;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-delfiles-directive
 [Files.Del]
 %DriverName%.sys
 
-;*************************************
+
+;-------------------------------------------------------------------------
+; Service installation support
+;-------------------------------------------------------------------------
+
 
 [DefaultInstall.NTx86]
 CopyFiles=Files.Copy.NTx86
@@ -59,31 +75,32 @@ CopyFiles=Files.Copy.NTx86
 [DefaultInstall.NTamd64]
 CopyFiles=Files.Copy.NTamd64
 
-; AddService MSDN:
-;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-addservice-directive
+
+; LegacyUninstall MSDN:
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/develop/creating-a-primitive-driver
+[DefaultUninstall]
+LegacyUninstall	= 1
+DelFiles		= Files.Del
+
+
 [DefaultInstall.NTx86.Services]
-AddService = %ServiceName%,%ServicInstFlags%, ServiceInstall
+; You may want to add the SPSVCINST_STARTSERVICE flag, like this:
+;     AddService=%ServiceName%,0x800,InstallService.Arch ; SPSVCINST_STARTSERVICE
+; AddService MSDN
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-addservice-directive
+AddService=%ServiceName%,,InstallService
 
 [DefaultInstall.NTamd64.Services]
-AddService = %ServiceName%,%ServicInstFlags%, ServiceInstall
+AddService=%ServiceName%,,InstallService
 
-[DefaultUninstall.NTx86]
-DelFiles   = Files.Del
-
-[DefaultUninstall.NTamd64]
-DelFiles   = Files.Del
 
 ; DelService MSDN:
 ;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-delservice-directive
-[DefaultUninstall.NTx86.Services]
+[DefaultUninstall.Services]
 DelService = %ServiceName%,0x200
 
-[DefaultUninstall.NTamd64.Services]
-DelService = %ServiceName%,0x200
 
-;*************************************
-
-[ServiceInstall]
+[InstallService]
 DisplayName    = %ServiceName%
 Description    = %ServiceDesc%
 ServiceBinary  = %12%\%DriverName%.sys
@@ -95,13 +112,15 @@ StartType      = 3                  ; 0 = SERVICE_BOOT_START
                                     ; 4 = SERVICE_DISABLED
 ErrorControl   = 1                  ; SERVICE_ERROR_NORMAL
 
-;*************************************
+
+;-------------------------------------------------------------------------
+; Strings section
+;-------------------------------------------------------------------------
+
 
 [Strings]
-ServicInstFlags         = 0x00000000    ; https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-addservice-directive
-                                        ; 0x00000800 = SPSVCSINST_STARTSERVICE, 安装后立即启动服务
 ManufacturerName        = "Template"
 DriverName              = "Template"
-ServiceDesc             = "Template INF"
 ServiceName             = "Template"
+ServiceDesc             = "Template INF"
 DiskId                  = "Template Device Installation Disk"
