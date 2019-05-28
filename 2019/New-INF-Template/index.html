@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN,en,default">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+  
+  
+  <link rel="stylesheet" href="/Blog/lib/needsharebutton/needsharebutton.css">
+
+
+
+
+
+  
+  
+  <link rel="stylesheet" href="/Blog/lib/Han/dist/han.min.css?v=3.3">
+
+
+
+  <meta http-equiv="Cache-Control" content="no-transform">
+  <meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link rel="stylesheet" href="/Blog/lib/fancybox/source/jquery.fancybox.css">
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/Blog/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/Blog/css/main.css?v=7.1.1">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/Blog/uploads/apple-touch-icon.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/Blog/uploads/favicon-32x32.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/Blog/uploads/favicon-16x16.png?v=7.1.1">
+
+
+  <link rel="mask-icon" href="/Blog/uploads/safari_pinned_tab.svg?v=7.1.1" color="#222">
+
+
+
+  <meta name="msapplication-config" content="/Blog/uploads/browserconfig.xml">
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/Blog/',
+    scheme: 'Gemini',
+    version: '7.1.1',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: true,
+    fancybox: true,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: 'OP1GITE8NC',
+      apiKey: '3376524e189201d978e52dbb0764689f',
+      indexName: 'Miro Blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="前几天写了篇 &amp;lt;&amp;lt;Legacy INF Template (传统 INF 模板)&amp;gt;&amp;gt;, 今天来补充一下 KMDF 和 NDIS6 的 INF 模板. 这两个模板的编写方式和之前 Legacy 的模板不一样, 是微软当前推荐使用的编写方法. 安装和卸载驱动新版的 INF 不能直接再使用 InstallHinfSection 来安装和卸载. 我给 devcon 添加了一些代码,">
+<meta name="keywords" content="Windows,Kernel">
+<meta property="og:type" content="article">
+<meta property="og:title" content="New INF Template">
+<meta property="og:url" content="https://mirokaku.github.io/Blog/2019/New-INF-Template/index.html">
+<meta property="og:site_name" content="Miro&#39;s Blog">
+<meta property="og:description" content="前几天写了篇 &amp;lt;&amp;lt;Legacy INF Template (传统 INF 模板)&amp;gt;&amp;gt;, 今天来补充一下 KMDF 和 NDIS6 的 INF 模板. 这两个模板的编写方式和之前 Legacy 的模板不一样, 是微软当前推荐使用的编写方法. 安装和卸载驱动新版的 INF 不能直接再使用 InstallHinfSection 来安装和卸载. 我给 devcon 添加了一些代码,">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-05-28T11:53:58.700Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="New INF Template">
+<meta name="twitter:description" content="前几天写了篇 &amp;lt;&amp;lt;Legacy INF Template (传统 INF 模板)&amp;gt;&amp;gt;, 今天来补充一下 KMDF 和 NDIS6 的 INF 模板. 这两个模板的编写方式和之前 Legacy 的模板不一样, 是微软当前推荐使用的编写方法. 安装和卸载驱动新版的 INF 不能直接再使用 InstallHinfSection 来安装和卸载. 我给 devcon 添加了一些代码,">
+
+
+
+  <link rel="alternate" href="/Blog/atom.xml" title="Miro's Blog" type="application/atom+xml">
+
+
+
+  
+  
+  <link rel="canonical" href="https://mirokaku.github.io/Blog/2019/New-INF-Template/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>New INF Template | Miro's Blog</title>
+  
+
+
+
+
+  <script async src="//www.googletagmanager.com/gtag/js?id=UA-140330910-1"></script>
+  <script>
+    var host = window.location.hostname;
+    if (host !== "localhost" || !true) {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-140330910-1');
+    }
+  </script>
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/Blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Miro's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <p class="site-subtitle">「碎碎念」</p>
+      
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/Blog/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <span class="exturl" data-url="aHR0cHM6Ly9hYm91dC5tZS9taXJva2FrdQ=="><i class="menu-item-icon fa fa-fw fa-question-circle"></i> <br>关于</span>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/Blog/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/Blog/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+  
+  
+
+  
+
+  <span class="exturl github-corner" data-url="aHR0cHM6Ly9naXRodWIuY29tL21pcm9rYWt1" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewbox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"/><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"/><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"/></svg></span>
+
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+    <div class="reading-progress-bar"></div>
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://mirokaku.github.io/Blog/Blog/2019/New-INF-Template/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Miro">
+      <meta itemprop="description" content="喵喵喵?">
+      <meta itemprop="image" content="/Blog/uploads/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Miro's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">New INF Template
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-05-28 19:34:46 / 修改时间：19:53:58" itemprop="dateCreated datePublished" datetime="2019-05-28T19:34:46+08:00">2019-05-28</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/Blog/categories/Windows/" itemprop="url" rel="index"><span itemprop="name">Windows</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+            <span id="/Blog/2019/New-INF-Template/" class="leancloud_visitors" data-flag-title="New INF Template">
+              <span class="post-meta-divider">|</span>
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              
+                <span class="post-meta-item-text">阅读次数：</span>
+              
+                <span class="leancloud-visitors-count"></span>
+            </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body han-init-context" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>前几天写了篇 &lt;&lt;Legacy INF Template (传统 INF 模板)&gt;&gt;, 今天来补充一下 KMDF 和 NDIS6 的 INF 模板. 这两个模板的编写方式和之前 Legacy 的模板不一样, 是微软当前推荐使用的编写方法.</p>
+<h2 id="安装和卸载驱动"><a href="#安装和卸载驱动" class="headerlink" title="安装和卸载驱动"></a>安装和卸载驱动</h2><p>新版的 INF 不能直接再使用 <code>InstallHinfSection</code> 来安装和卸载. 我给 devcon 添加了一些代码, 来支持 Legacy 和 NDIS6 的安装.</p>
+<p>项目地址: <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL01pcm9LYWt1L2RldmNvbg==" title="https://github.com/MiroKaku/devcon">https://github.com/MiroKaku/devcon<i class="fa fa-external-link"></i></span></p>
+<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><div class="highlight-wrap" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" contenteditable="true" data-rel="SHELL"><figure class="iseeu highlight /shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">; KMDF</span><br><span class="line">devcon.exe install    KMDF    KMDF.inf       Root\KMDF</span><br><span class="line">     |        |        |         |               |</span><br><span class="line">安装工具    安装命令 安装模式  驱动 inf 路径  驱动硬件id(inf有写)</span><br></pre></td></tr></table></figure></div>
+
+<div class="highlight-wrap" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" contenteditable="true" data-rel="SHELL"><figure class="iseeu highlight /shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">; NDIS6.x</span><br><span class="line">devcon.exe install NDIS6 NDIS6.inf Root\NDIS6</span><br></pre></td></tr></table></figure></div>
+
+<a id="more"></a>
+
+<h2 id="KMDF-驱动-INF-模板"><a href="#KMDF-驱动-INF-模板" class="headerlink" title="KMDF 驱动 INF 模板"></a>KMDF 驱动 INF 模板</h2><div class="highlight-wrap" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" contenteditable="true" data-rel="INI"><figure class="iseeu highlight /ini"><figcaption><span>NT</span><a href="/Blog/downloads/code/KMDF.inf">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">;-------------------------------------------------------------------------</span></span><br><span class="line"><span class="comment">; Template.INF -- KMDF Driver</span></span><br><span class="line"><span class="comment">;</span></span><br><span class="line"><span class="comment">; Copyright (c) 2019, Microsoft.Com LLC.  All rights reserved.</span></span><br><span class="line"><span class="comment">;------------------------------------------------------------------------</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; KMDF INF MSDN: https://docs.microsoft.com/en-us/windows-hardware/drivers/wdf/using-inx-files-to-create-inf-files</span></span><br><span class="line"><span class="comment">;</span></span><br><span class="line"><span class="comment">; Class And ClassGuid MSDN:</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/ifs/file-system-filter-driver-classes-and-class-guids</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/system-defined-device-setup-classes-available-to-vendors</span></span><br><span class="line"><span class="section">[version]</span></span><br><span class="line"><span class="attr">Signature</span>       = <span class="string">"$Windows NT$"</span></span><br><span class="line"><span class="attr">Class</span>           = %ClassName%</span><br><span class="line"><span class="attr">ClassGUID</span>       = {<span class="number">78</span>A1C341-<span class="number">4539</span>-<span class="number">11</span>d3-B88D-<span class="number">00</span>C04FAD5171}</span><br><span class="line"><span class="attr">Provider</span>        = %ManufacturerName%</span><br><span class="line"><span class="attr">CatalogFile</span>     = %DriverName%.cat</span><br><span class="line"><span class="attr">DriverVer</span>       = <span class="number">01</span>/<span class="number">11</span>/<span class="number">2019</span>,<span class="number">9.43</span>.<span class="number">55.74</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">; Manufacturer MSDN:</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-manufacturer-section</span></span><br><span class="line"><span class="section">[Manufacturer]</span></span><br><span class="line">%ManufacturerName%=Standard,,NTx86,NTamd64</span><br><span class="line"></span><br><span class="line"><span class="comment">; Models MSDN:</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-models-section</span></span><br><span class="line"><span class="comment">; hw_id(Hardware ID) MSDN:</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/hardware-ids</span></span><br><span class="line"><span class="section">[Standard.NTx86]</span></span><br><span class="line">%ServiceDesc%=Install, Root\Template ; hw_id</span><br><span class="line"></span><br><span class="line"><span class="section">[Standard.NTamd64]</span></span><br><span class="line">%ServiceDesc%=Install, Root\Template ; hw_id</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">;-------------------------------------------------------------------------</span></span><br><span class="line"><span class="comment">; Class section </span></span><br><span class="line"><span class="comment">;-------------------------------------------------------------------------</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="section">[ClassInstall32]</span></span><br><span class="line"><span class="attr">Addreg</span>                  = ClassInstall.Reg</span><br><span class="line"></span><br><span class="line"><span class="section">[ClassInstall.Reg]</span></span><br><span class="line">HKR,,,0,%ClassName%</span><br><span class="line">HKR,,Icon,,-5</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">;-------------------------------------------------------------------------</span></span><br><span class="line"><span class="comment">; Installation Section</span></span><br><span class="line"><span class="comment">;-------------------------------------------------------------------------</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="section">[Install.NTx86]</span></span><br><span class="line"><span class="attr">CopyFiles</span>               = Install.Copyfiles.NTx86</span><br><span class="line"></span><br><span class="line"><span class="section">[Install.NTamd64]</span></span><br><span class="line"><span class="attr">CopyFiles</span>               = Install.Copyfiles.NTamd64</span><br><span class="line"></span><br><span class="line"><span class="section">[Install.Remove]</span></span><br><span class="line"><span class="attr">DelFiles</span>                = Install.Delfiles</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">; DestinationDirs MSDN</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-destinationdirs-section</span></span><br><span class="line"><span class="section">[DestinationDirs]</span></span><br><span class="line"><span class="attr">DefaultDestDir</span>          = <span class="number">12</span></span><br><span class="line"><span class="attr">CoInstaller.Copyfiles</span>   = <span class="number">11</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">; SourceDisksNames MSDN</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-sourcedisksnames-section</span></span><br><span class="line"><span class="section">[SourceDisksNames]</span></span><br><span class="line"><span class="attr">1</span>=%DiskId%,<span class="string">""</span>,,</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">; SourceDisksFiles MSDN</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-sourcedisksfiles-section</span></span><br><span class="line"><span class="comment">; Each filename entry must specify the exact name of a file on the source disk. </span></span><br><span class="line"><span class="comment">;     You cannot use a %strkey% token to specify the file name.</span></span><br><span class="line"><span class="section">[SourceDisksFiles]</span></span><br><span class="line"><span class="attr">Template.sys</span>        = <span class="number">1</span>,,</span><br><span class="line">WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 ; make sure the number matches with SourceDisksNames</span><br><span class="line"></span><br><span class="line"><span class="section">[SourceDisksFiles.x86]</span></span><br><span class="line"><span class="attr">Template.x86.sys</span>    = <span class="number">1</span>,,</span><br><span class="line">WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1</span><br><span class="line"></span><br><span class="line"><span class="section">[SourceDisksFiles.amd64]</span></span><br><span class="line"><span class="attr">Template.x64.sys</span>    = <span class="number">1</span>,,</span><br><span class="line">WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">; Copyfiles MSDN:</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-copyfiles-directive</span></span><br><span class="line"><span class="section">[Install.Copyfiles.NTx86]</span></span><br><span class="line">%DriverName%.sys,%DriverName%.x86.sys,,0x00004022 ; COPYFLG_NOSKIP | COPYFLG_NO_VERSION_DIALOG | COPYFLG_IN_USE_RENAME</span><br><span class="line"></span><br><span class="line"><span class="section">[Install.Copyfiles.NTamd64]</span></span><br><span class="line">%DriverName%.sys,%DriverName%.x64.sys,,0x00004022</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">; Delfiles MSDN:</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-delfiles-directive</span></span><br><span class="line"><span class="section">[Install.Delfiles]</span></span><br><span class="line">%DriverName%.sys</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">;-------------------------------------------------------------------------</span></span><br><span class="line"><span class="comment">; Service installation support</span></span><br><span class="line"><span class="comment">;-------------------------------------------------------------------------</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="section">[Install.NTx86.Services]</span></span><br><span class="line"><span class="comment">; You may want to add the SPSVCINST_STARTSERVICE flag, like this:</span></span><br><span class="line"><span class="comment">;     AddService=%ServiceName%,0x800,InstallService.Arch ; SPSVCINST_STARTSERVICE</span></span><br><span class="line"><span class="comment">; AddService MSDN</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-addservice-directive</span></span><br><span class="line"><span class="attr">AddService</span> = %ServiceName%,<span class="number">0</span>x00000002,InstallService</span><br><span class="line"></span><br><span class="line"><span class="section">[Install.NTamd64.Services]</span></span><br><span class="line"><span class="attr">AddService</span> = %ServiceName%,<span class="number">0</span>x00000002,InstallService</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="section">[InstallService]</span></span><br><span class="line"><span class="attr">DisplayName</span>     = %ServiceDesc%</span><br><span class="line"><span class="attr">Description</span>     = %ServiceDesc%</span><br><span class="line"><span class="attr">ServiceBinary</span>   = %<span class="number">12</span>%\%DriverName%.sys</span><br><span class="line"><span class="attr">ServiceType</span>     = <span class="number">1</span>                 ;SERVICE_KERNEL_DRIVER</span><br><span class="line"><span class="attr">StartType</span>       = <span class="number">3</span>                 ; <span class="number">0</span> = SERVICE_BOOT_START</span><br><span class="line">                                    <span class="comment">; 1 = SERVICE_SYSTEM_START</span></span><br><span class="line">                                    <span class="comment">; 2 = SERVICE_AUTO_START</span></span><br><span class="line">                                    <span class="comment">; 3 = SERVICE_DEMAND_START</span></span><br><span class="line">                                    <span class="comment">; 4 = SERVICE_DISABLED</span></span><br><span class="line"><span class="attr">ErrorControl</span>    = <span class="number">1</span>                 ;SERVICE_ERROR_NORMAL</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="section">[Install.Remove.Services]</span></span><br><span class="line"><span class="attr">DelService</span> = %ServiceName%,<span class="number">0</span>x200    ; SPSVCINST_STOPSERVICE</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">;-------------------------------------------------------------------------</span></span><br><span class="line"><span class="comment">; Install Coinstaller installation</span></span><br><span class="line"><span class="comment">;-------------------------------------------------------------------------</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="section">[Install.NT.CoInstallers]</span></span><br><span class="line"><span class="attr">AddReg</span>      = CoInstaller.Reg</span><br><span class="line"><span class="attr">CopyFiles</span>   = CoInstaller.Copyfiles</span><br><span class="line"></span><br><span class="line"><span class="section">[CoInstaller.Reg]</span></span><br><span class="line">HKR,,CoInstallers32,0x00010000, "WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll,WdfCoInstaller"</span><br><span class="line"></span><br><span class="line"><span class="section">[CoInstaller.Copyfiles]</span></span><br><span class="line">WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll</span><br><span class="line"></span><br><span class="line"><span class="section">[Install.NT.Wdf]</span></span><br><span class="line"><span class="attr">KmdfService</span>         = %ServiceName%, WDFSection</span><br><span class="line"><span class="section">[WDFSection]</span></span><br><span class="line"><span class="attr">KmdfLibraryVersion</span>  = <span class="variable">$KMDFVERSION</span>$</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">;-------------------------------------------------------------------------</span></span><br><span class="line"><span class="comment">; Strings section</span></span><br><span class="line"><span class="comment">;-------------------------------------------------------------------------</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="section">[Strings]</span></span><br><span class="line"><span class="attr">ClassName</span>           = <span class="string">"Samples"</span></span><br><span class="line"><span class="attr">ManufacturerName</span>    = <span class="string">"Template"</span></span><br><span class="line"><span class="attr">DriverName</span>          = <span class="string">"Template"</span></span><br><span class="line"><span class="attr">ServiceName</span>         = <span class="string">"Template"</span></span><br><span class="line"><span class="attr">ServiceDesc</span>         = <span class="string">"Template KMDF Driver"</span></span><br><span class="line"><span class="attr">DiskId</span>              = <span class="string">"Template Installation Disk"</span></span><br></pre></td></tr></table></figure></div>
+
+<h2 id="NDIS6-X-驱动-INF-模板"><a href="#NDIS6-X-驱动-INF-模板" class="headerlink" title="NDIS6.X 驱动 INF 模板"></a>NDIS6.X 驱动 INF 模板</h2><div class="highlight-wrap" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" contenteditable="true" data-rel="INI"><figure class="iseeu highlight /ini"><figcaption><span>NT</span><a href="/Blog/downloads/code/NDIS6.inf">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">;-------------------------------------------------------------------------</span></span><br><span class="line"><span class="comment">; Template.INF -- NDIS 6.x LightWeight Filter Driver</span></span><br><span class="line"><span class="comment">;</span></span><br><span class="line"><span class="comment">; Copyright (c) 2019, Microsoft.Com LLC.  All rights reserved.</span></span><br><span class="line"><span class="comment">;------------------------------------------------------------------------</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">; Class And ClassGuid MSDN:</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/ifs/file-system-filter-driver-classes-and-class-guids</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/system-defined-device-setup-classes-available-to-vendors</span></span><br><span class="line"><span class="section">[version]</span></span><br><span class="line"><span class="attr">Signature</span>       = <span class="string">"$Windows NT$"</span></span><br><span class="line"><span class="attr">Class</span>           = NetService</span><br><span class="line"><span class="attr">ClassGUID</span>       = {<span class="number">4</span>D36E974-E325-<span class="number">11</span>CE-BFC1-<span class="number">08002</span>BE10318}</span><br><span class="line"><span class="attr">Provider</span>        = %ManufacturerName%</span><br><span class="line"><span class="attr">CatalogFile</span>     = %DriverName%.cat</span><br><span class="line"><span class="attr">DriverVer</span>       = <span class="number">01</span>/<span class="number">11</span>/<span class="number">2019</span>,<span class="number">9.43</span>.<span class="number">55.74</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">; Manufacturer MSDN:</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-manufacturer-section</span></span><br><span class="line"><span class="section">[Manufacturer]</span></span><br><span class="line">%ManufacturerName%=Standard,NTx86,NTamd64</span><br><span class="line"></span><br><span class="line"><span class="comment">; Models MSDN:</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-models-section</span></span><br><span class="line"><span class="comment">; hw_id(Hardware ID) MSDN:</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/hardware-ids</span></span><br><span class="line"><span class="section">[Standard.NTx86]</span></span><br><span class="line">%ServiceDesc%=Install, Root\Template ; hw_id</span><br><span class="line"></span><br><span class="line"><span class="section">[Standard.NTamd64]</span></span><br><span class="line">%ServiceDesc%=Install, Root\Template ; hw_id</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">;-------------------------------------------------------------------------</span></span><br><span class="line"><span class="comment">; Installation Section</span></span><br><span class="line"><span class="comment">;-------------------------------------------------------------------------</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="section">[Install.NTx86]</span></span><br><span class="line"><span class="attr">AddReg</span>              = InstallNdi</span><br><span class="line"></span><br><span class="line"><span class="comment">; All LWFs must include the 0x40000 bit (NCF_LW_FILTER). Unlike miniports, you</span></span><br><span class="line"><span class="comment">; don't usually need to customize this value.</span></span><br><span class="line"><span class="attr">Characteristics</span>     = <span class="number">0</span>x40000</span><br><span class="line"></span><br><span class="line"><span class="comment">; This must be a random, unique value.</span></span><br><span class="line"><span class="comment">; FILTER_UNIQUE_NAME in filter.h must match this GUID identically.</span></span><br><span class="line"><span class="comment">; Both should have {curly braces}.</span></span><br><span class="line"><span class="attr">NetCfgInstanceId</span>    = <span class="string">"{00000000-0000-0000-0000-000000000000}"</span></span><br><span class="line"></span><br><span class="line"><span class="attr">Copyfiles</span>           = Install.Copyfiles.NTx86</span><br><span class="line"></span><br><span class="line"><span class="section">[Install.NTamd64]</span></span><br><span class="line"><span class="attr">AddReg</span>              = InstallNdi</span><br><span class="line"><span class="attr">Characteristics</span>     = <span class="number">0</span>x40000</span><br><span class="line"><span class="attr">NetCfgInstanceId</span>    = <span class="string">"{00000000-0000-0000-0000-000000000000}"</span></span><br><span class="line"><span class="attr">Copyfiles</span>           = Install.Copyfiles.NTamd64</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="section">[Install.NTx86.Remove]</span></span><br><span class="line"><span class="attr">DelFiles</span>            = Install.Delfiles</span><br><span class="line"><span class="attr">DelReg</span>              = UninstallNdi</span><br><span class="line"></span><br><span class="line"><span class="section">[Install.NTamd64.Remove]</span></span><br><span class="line"><span class="attr">DelFiles</span>            = Install.Delfiles</span><br><span class="line"><span class="attr">DelReg</span>              = UninstallNdi</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">; DestinationDirs MSDN</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-destinationdirs-section</span></span><br><span class="line"><span class="section">[DestinationDirs]</span></span><br><span class="line"><span class="attr">DefaultDestDir</span>      = <span class="number">12</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">; SourceDisksNames MSDN</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-sourcedisksnames-section</span></span><br><span class="line"><span class="section">[SourceDisksNames]</span></span><br><span class="line"><span class="attr">1</span>=%DiskId%,<span class="string">""</span>,,</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">; SourceDisksFiles MSDN</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-sourcedisksfiles-section</span></span><br><span class="line"><span class="comment">; Each filename entry must specify the exact name of a file on the source disk. </span></span><br><span class="line"><span class="comment">;     You cannot use a %strkey% token to specify the file name.</span></span><br><span class="line"><span class="section">[SourceDisksFiles]</span></span><br><span class="line"><span class="attr">Template.sys</span>        =<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="section">[SourceDisksFiles.x86]</span></span><br><span class="line"><span class="attr">Template.x86.sys</span>    =<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="section">[SourceDisksFiles.amd64]</span></span><br><span class="line"><span class="attr">Template.x64.sys</span>    =<span class="number">1</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">; Copyfiles MSDN:</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-copyfiles-directive</span></span><br><span class="line"><span class="section">[Install.Copyfiles.NTx86]</span></span><br><span class="line">%DriverName%.sys,%DriverName%.x86.sys,,0x00004022 ; COPYFLG_NOSKIP | COPYFLG_NO_VERSION_DIALOG | COPYFLG_IN_USE_RENAME</span><br><span class="line"></span><br><span class="line"><span class="section">[Install.Copyfiles.NTamd64]</span></span><br><span class="line">%DriverName%.sys,%DriverName%.x64.sys,,0x00004022</span><br><span class="line"></span><br><span class="line"><span class="comment">; Delfiles MSDN:</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-delfiles-directive</span></span><br><span class="line"><span class="section">[Install.Delfiles]</span></span><br><span class="line">%DriverName%.sys</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">;-------------------------------------------------------------------------</span></span><br><span class="line"><span class="comment">; Ndi installation support</span></span><br><span class="line"><span class="comment">;-------------------------------------------------------------------------</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="section">[InstallNdi]</span></span><br><span class="line">HKR, Ndi,Service,,%ServiceName%</span><br><span class="line">HKR, Ndi,CoServices,0x00010000,%ServiceName%</span><br><span class="line">HKR, Ndi,HelpText,,%NdiHelpText%</span><br><span class="line"></span><br><span class="line"><span class="comment">; Set the FilterClass here.  The FilterClass controls the order in which</span></span><br><span class="line"><span class="comment">; filters are bound to the underlying miniport.  Possible options include:</span></span><br><span class="line"><span class="comment">;     Custom, Diagnostic, Failover, Loadbalance, Vpn, Compression, Encryption, Scheduler</span></span><br><span class="line"><span class="comment">; See MSDN for a description of each. https://docs.microsoft.com/en-us/windows-hardware/drivers/network/configuring-an-inf-file-for-a-modifying-filter-driver</span></span><br><span class="line">HKR, Ndi,FilterClass,, compression</span><br><span class="line"></span><br><span class="line"><span class="comment">; For a Monitoring filter, use this:</span></span><br><span class="line"><span class="comment">;     HKR, Ndi,FilterType,0x00010001, 1 ; Monitoring filter</span></span><br><span class="line"><span class="comment">; For a Modifying filter, use this:</span></span><br><span class="line"><span class="comment">;     HKR, Ndi,FilterType,0x00010001, 2 ; Modifying filter</span></span><br><span class="line">HKR, Ndi,FilterType,0x00010001,2</span><br><span class="line"></span><br><span class="line"><span class="comment">; Specifying Binding Interfaces MSDN:</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/network/specifying-binding-interfaces</span></span><br><span class="line">HKR, Ndi\Interfaces,UpperRange,,"noupper"</span><br><span class="line">HKR, Ndi\Interfaces,LowerRange,,"nolower"</span><br><span class="line"></span><br><span class="line"><span class="comment">; Ensure that the list of media types below is correct.  Typically,</span></span><br><span class="line"><span class="comment">; filters include "ethernet".  Filters may also include "ppip" to include</span></span><br><span class="line"><span class="comment">; native WWAN stacks, but you must be prepared to handle the packet framing.</span></span><br><span class="line"><span class="comment">; Possible values are listed on MSDN, but common values include:</span></span><br><span class="line"><span class="comment">;     ethernet, wan, ppip, wlan</span></span><br><span class="line">HKR, Ndi\Interfaces, FilterMediaTypes,,"ethernet, wan"</span><br><span class="line">HKR, Ndi\Interfaces, LowerExclude,, "ndisatm, ndiscowan, ndiswan, ndiswanasync, ndiswanipx, ndiswannbf"</span><br><span class="line"></span><br><span class="line"><span class="comment">; For a Mandatory filter, use this:</span></span><br><span class="line"><span class="comment">;     HKR, Ndi,FilterRunType,0x00010001, 1 ; Mandatory filter</span></span><br><span class="line"><span class="comment">; For an Optional filter, use this:</span></span><br><span class="line"><span class="comment">;     HKR, Ndi,FilterRunType,0x00010001, 2 ; Optional filter</span></span><br><span class="line"><span class="comment">; Mandatory Filter Drivers MSDN</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/network/mandatory-filter-drivers</span></span><br><span class="line">HKR, Ndi,FilterRunType,0x00010001, 1 ; Mandatory filter</span><br><span class="line"></span><br><span class="line"><span class="comment">; By default, Mandatory filters unbind all protocols when they are</span></span><br><span class="line"><span class="comment">; installed/uninstalled, while Optional filters merely pause the stack.  If you</span></span><br><span class="line"><span class="comment">; would like to override this behavior, you can include these options.  These</span></span><br><span class="line"><span class="comment">; options only take effect with 6.30 filters on Windows "8" or later.</span></span><br><span class="line"><span class="comment">; To prevent a full unbind, and merely pause/restart protocols:</span></span><br><span class="line"><span class="comment">;     HKR, Ndi,UnbindOnAttach,0x00010001, 0 ; Do not unbind during FilterAttach</span></span><br><span class="line"><span class="comment">;     HKR, Ndi,UnbindOnDetach,0x00010001, 0 ; Do not unbind during FilterDetach</span></span><br><span class="line"><span class="comment">; To force a full unbind/bind (which includes pause/restart, of course):</span></span><br><span class="line"><span class="comment">;     HKR, Ndi,UnbindOnAttach,0x00010001, 1 ; Unbind during FilterAttach</span></span><br><span class="line"><span class="comment">;     HKR, Ndi,UnbindOnDetach,0x00010001, 1 ; Unbind during FilterDetach</span></span><br><span class="line"><span class="comment">;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; NDIS can start a miniport stack even if some Optional filters are</span></span><br><span class="line"><span class="comment">; missing.  However, NDIS reserves the right to wait for the Optional</span></span><br><span class="line"><span class="comment">; filters to be registered, since it's faster to attach a filter if</span></span><br><span class="line"><span class="comment">; the protocols haven't been bound yet.</span></span><br><span class="line"><span class="comment">; If your Optional filter is unlikely to be started at boot, you can</span></span><br><span class="line"><span class="comment">; use this hint to inform NDIS to spend less time waiting for your</span></span><br><span class="line"><span class="comment">; filter.  Note this setting is ignored for Mandatory filters; NDIS</span></span><br><span class="line"><span class="comment">; always waits forever for all Mandatory filters.</span></span><br><span class="line"><span class="comment">;     HKR, Ndi,NdisBootStart,0x00010001, 0 ; Don't wait for this driver to start at boot</span></span><br><span class="line"><span class="comment">; Enable this setting only if your filter will be bound, but the driver</span></span><br><span class="line"><span class="comment">; is not usually started at boot.  If your driver will typically start</span></span><br><span class="line"><span class="comment">; at boot, then enabling this setting would defeat the NDIS heuristic</span></span><br><span class="line"><span class="comment">; and slightly slow down boot.</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="section">[UninstallNdi]</span></span><br><span class="line">HKR,,,0x00002000</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">;-------------------------------------------------------------------------</span></span><br><span class="line"><span class="comment">; Service installation support</span></span><br><span class="line"><span class="comment">;-------------------------------------------------------------------------</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="section">[Install.NTx86.Services]</span></span><br><span class="line"><span class="comment">; You may want to add the SPSVCINST_STARTSERVICE flag, like this:</span></span><br><span class="line"><span class="comment">;     AddService=%ServiceName%,0x800,InstallService.Arch ; SPSVCINST_STARTSERVICE</span></span><br><span class="line"><span class="comment">; AddService MSDN</span></span><br><span class="line"><span class="comment">;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-addservice-directive</span></span><br><span class="line"><span class="attr">AddService</span>=%ServiceName%,,InstallService</span><br><span class="line"></span><br><span class="line"><span class="section">[Install.NTamd64.Services]</span></span><br><span class="line"><span class="attr">AddService</span>=%ServiceName%,,InstallService</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="section">[InstallService]</span></span><br><span class="line"><span class="attr">DisplayName</span>     = %ServiceDesc%</span><br><span class="line"><span class="attr">Description</span>     = %ServiceDesc%</span><br><span class="line"><span class="attr">ServiceBinary</span>   = %<span class="number">12</span>%\%DriverName%.sys</span><br><span class="line"><span class="attr">ServiceType</span>     = <span class="number">1</span>                 ;SERVICE_KERNEL_DRIVER</span><br><span class="line"><span class="attr">StartType</span>       = <span class="number">3</span>                 ; <span class="number">0</span> = SERVICE_BOOT_START</span><br><span class="line">                                    <span class="comment">; 1 = SERVICE_SYSTEM_START</span></span><br><span class="line">                                    <span class="comment">; 2 = SERVICE_AUTO_START</span></span><br><span class="line">                                    <span class="comment">; 3 = SERVICE_DEMAND_START</span></span><br><span class="line">                                    <span class="comment">; 4 = SERVICE_DISABLED</span></span><br><span class="line"><span class="attr">ErrorControl</span>    = <span class="number">1</span>                 ;SERVICE_ERROR_NORMAL</span><br><span class="line"><span class="attr">LoadOrderGroup</span>  = NDIS</span><br><span class="line"><span class="attr">AddReg</span>          = Common.Params.Reg, NdisImPlatformBindingOptions.Reg</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="section">[Install.Remove.Services]</span></span><br><span class="line"><span class="attr">DelService</span> = %ServiceName%,<span class="number">0</span>x200    ; SPSVCINST_STOPSERVICE</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="section">[Common.Params.Reg]</span></span><br><span class="line"><span class="comment">; You can add any sort of NDIS parameters here.  Filter drivers</span></span><br><span class="line"><span class="comment">; don't always need NDIS parameters, so it's okay to have nothing here.</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; Remove the sample parameters below.</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; Sample 1: "DriverParam" is a per-driver parameter.</span></span><br><span class="line"><span class="comment">;   HKR, FilterDriverParams\DriverParam,     ParamDesc,   , "Driverparam for lwf"</span></span><br><span class="line"><span class="comment">;   HKR, FilterDriverParams\DriverParam,     default,     , "5"</span></span><br><span class="line"><span class="comment">;   HKR, FilterDriverParams\DriverParam,     type,        , "int"</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; Sample 2: "AdapterParam" is a per-module parameter.</span></span><br><span class="line"><span class="comment">;   HKR, FilterAdapterParams\AdapterParam,   ParamDesc,   , "Adapterparam for lwf"</span></span><br><span class="line"><span class="comment">;   HKR, FilterAdapterParams\AdapterParam,   default,     , "10"</span></span><br><span class="line"><span class="comment">;   HKR, FilterAdapterParams\AdapterParam,   type,        , "int"</span></span><br><span class="line"></span><br><span class="line"><span class="section">[NdisImPlatformBindingOptions.Reg]</span></span><br><span class="line"><span class="comment">; By default, when an LBFO team or Bridge is created, all filters will be</span></span><br><span class="line"><span class="comment">; unbound from the underlying members and bound to the TNic(s). This keyword</span></span><br><span class="line"><span class="comment">; allows a component to opt out of the default behavior</span></span><br><span class="line"><span class="comment">; To prevent binding this filter to the TNic(s):</span></span><br><span class="line"><span class="comment">;   HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,1 ; Do not bind to TNic</span></span><br><span class="line"><span class="comment">; To prevent unbinding this filter from underlying members:</span></span><br><span class="line"><span class="comment">;   HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,2 ; Do not unbind from Members</span></span><br><span class="line"><span class="comment">; To prevent both binding to TNic and unbinding from members:</span></span><br><span class="line"><span class="comment">;   HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,3 ; Do not bind to TNic or unbind from Members</span></span><br><span class="line">HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,0 ; Subscribe to default behavior</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">;-------------------------------------------------------------------------</span></span><br><span class="line"><span class="comment">; Strings section</span></span><br><span class="line"><span class="comment">;-------------------------------------------------------------------------</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="section">[Strings]</span></span><br><span class="line"><span class="attr">ManufacturerName</span>    = <span class="string">"Template"</span></span><br><span class="line"><span class="attr">DriverName</span>          = <span class="string">"Template"</span></span><br><span class="line"><span class="attr">ServiceName</span>         = <span class="string">"Template"</span></span><br><span class="line"><span class="attr">ServiceDesc</span>         = <span class="string">"Template NDIS6 Packet Driver"</span></span><br><span class="line"><span class="attr">DiskId</span>              = <span class="string">"Template Device Installation Disk"</span></span><br><span class="line"><span class="attr">NdiHelpText</span>         = <span class="string">"A NDIS 6 filter driver to support packet capturing and sending under Windows 7, 8 &amp; 10"</span></span><br></pre></td></tr></table></figure></div>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+      <div>
+        <div id="reward-container">
+  <div>如果喜欢, 请给我加个🍗. 谢谢!!</div>
+  <button id="reward-button" disable="enable" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+
+    
+      
+      
+        
+      
+      <div style="display: inline-block">
+        <img src="/Blog/uploads/alipay.jpg" alt="Miro 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        
+
+
+
+
+  
+
+
+
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Miro</li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    
+    <a href="https://mirokaku.github.io/Blog/2019/New-INF-Template/" title="New INF Template">https://mirokaku.github.io/Blog/2019/New-INF-Template/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC8="><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</span> 许可协议。转载请注明出处！</li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/Blog/tags/Windows/" rel="tag"># Windows</a>
+          
+            <a href="/Blog/tags/Kernel/" rel="tag"># Kernel</a>
+          
+        </div>
+      
+
+      
+      
+        <div class="post-widgets">
+        
+
+        
+
+        
+          
+          <div class="social_share">
+            
+            
+              <div id="needsharebutton-postbottom">
+                <span class="btn">
+                  <i class="fa fa-share-alt" aria-hidden="true"></i>
+                </span>
+              </div>
+            
+            
+          </div>
+        
+        </div>
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/Blog/2019/INF-Template/" rel="next" title="Legacy INF Template">
+                <i class="fa fa-chevron-left"></i> Legacy INF Template
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="gitalk-container">
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/Blog/uploads/avatar.png" alt="Miro">
+            
+              <p class="site-author-name" itemprop="name">Miro</p>
+              <div class="site-description motion-element" itemprop="description">喵喵喵?</div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/Blog/archives/">
+                
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">6</span>
+                    <span class="site-state-item-name">分类</span>
+                  
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">13</span>
+                    <span class="site-state-item-name">标签</span>
+                  
+                </div>
+              
+            </nav>
+          
+
+          
+            <div class="feed-link motion-element">
+              <a href="/Blog/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+
+          
+
+          
+             <div class="cc-license motion-element" itemprop="license">
+              
+              
+                
+              
+              
+              
+              <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC8="><img src="/Blog/images/cc-by-nc-sa.svg" alt="Creative Commons"></span>
+             </div>
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#安装和卸载驱动"><span class="nav-number">1.</span> <span class="nav-text">安装和卸载驱动</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#安装"><span class="nav-number">1.1.</span> <span class="nav-text">安装</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#KMDF-驱动-INF-模板"><span class="nav-number">2.</span> <span class="nav-text">KMDF 驱动 INF 模板</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#NDIS6-X-驱动-INF-模板"><span class="nav-number">3.</span> <span class="nav-text">NDIS6.X 驱动 INF 模板</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Miro</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <span class="exturl theme-link" data-url="aHR0cHM6Ly9oZXhvLmlv">Hexo</span> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <span class="exturl theme-link" data-url="aHR0cHM6Ly90aGVtZS1uZXh0Lm9yZw==">NexT.Gemini</span> v7.1.1</div>
+
+
+
+
+        
+
+
+  <script>
+    var _mtac = {};
+    (function() {
+      var mta = document.createElement("script");
+      mta.src = "https://pingjs.qq.com/h5/stats.js";
+      mta.setAttribute("name", "MTAH5");
+      mta.setAttribute("sid", "500683073");
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(mta, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script src="/Blog/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/Blog/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/Blog/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script src="/Blog/lib/fancybox/source/jquery.fancybox.pack.js"></script>
+
+  
+  <script src="/Blog/lib/reading_progress/reading_progress.js"></script>
+
+
+  
+
+
+  <script src="/Blog/js/utils.js?v=7.1.1"></script>
+
+  <script src="/Blog/js/motion.js?v=7.1.1"></script>
+
+
+
+  
+  
+
+
+  <script src="/Blog/js/affix.js?v=7.1.1"></script>
+
+  <script src="/Blog/js/schemes/pisces.js?v=7.1.1"></script>
+
+
+
+
+  
+  <script src="/Blog/js/scrollspy.js?v=7.1.1"></script>
+<script src="/Blog/js/post-details.js?v=7.1.1"></script>
+
+
+
+  
+
+
+  <script src="/Blog/js/next-boot.js?v=7.1.1"></script>
+
+
+  
+
+  
+  <script src="/Blog/js/exturl.js?v=7.1.1"></script>
+
+
+  
+  
+  
+
+  
+
+  
+  
+  
+
+
+  
+
+
+  
+    
+
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+
+
+<script src="//cdn.jsdelivr.net/npm/js-md5@0.7.3/src/md5.min.js"></script>
+
+<script>
+  var gitalk = new Gitalk({
+    clientID: '7fdb7c3db43b443fd9d0',
+    clientSecret: 'ca5448f06e8b2651d1a1237d508874c0c7773da0',
+    repo: 'Blog',
+    owner: 'MiroKaku',
+    admin: ['MiroKaku'],
+    id: md5(location.pathname),
+    
+      language: window.navigator.language || window.navigator.userLanguage,
+    
+    distractionFreeMode: 'true'
+  });
+  gitalk.render('gitalk-container');
+</script>
+
+  
+
+
+  
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/Blog/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/Blog/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/Blog/js/algolia-search.js?v=7.1.1"></script>
+
+
+
+  
+  
+  <script>
+    
+    function addCount(Counter) {
+      var $visitors = $('.leancloud_visitors');
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url }) })
+        .done(function({ results }) {
+          if (results.length > 0) {
+            var counter = results[0];
+            
+              var $element = $(document.getElementById(url));
+              $element.find('.leancloud-visitors-count').text(counter.time + 1);
+            
+            Counter('put', '/classes/Counter/' + counter.objectId, JSON.stringify({ time: { '__op': 'Increment', 'amount': 1 } }))
+            
+              .fail(function ({ responseJSON }) {
+                console.log('Failed to save Visitor num, with error message: ' + responseJSON.error);
+              })
+          } else {
+            
+              var $element = $(document.getElementById(url));
+              $element.find('.leancloud-visitors-count').text('Counter not initialized! More info at console err msg.');
+              console.error('ATTENTION! LeanCloud counter has security bug, see how to solve it here: https://github.com/theme-next/hexo-leancloud-counter-security. \n However, you can still use LeanCloud without security, by setting `security` option to `false`.');
+            
+          }
+        })
+        .fail(function ({ responseJSON }) {
+          console.log('LeanCloud Counter Error: ' + responseJSON.code + ' ' + responseJSON.error);
+        });
+    }
+    
+
+    $(function() {
+      $.get('https://app-router.leancloud.cn/2/route?appId=' + 'tdBeFC5dcAqjaQszk8bS79EO-gzGzoHsz')
+        .done(function({ api_server }) {
+          var Counter = function(method, url, data) {
+            return $.ajax({
+              method: method,
+              url: 'https://' + api_server + '/1.1' + url,
+              headers: {
+                'X-LC-Id': 'tdBeFC5dcAqjaQszk8bS79EO-gzGzoHsz',
+                'X-LC-Key': 'RDlwA8qFUcpCLjA8QvyqcYOj',
+                'Content-Type': 'application/json',
+              },
+              data: data
+            });
+          };
+          
+            addCount(Counter);
+          
+        });
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/Blog/lib/needsharebutton/needsharebutton.js"></script>
+  <script>
+    
+      pbOptions = {};
+      
+        pbOptions.iconStyle = "default";
+      
+        pbOptions.boxForm = "horizontal";
+      
+        pbOptions.position = "bottomCenter";
+      
+        pbOptions.networks = "Weibo,Wechat,Twitter,GoogleBookmarks,Evernote";
+      
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+    
+    
+  </script>
+
+
+  
+
+  
+
+  
+
+  
+<script>
+  $('.highlight').not('.gist .highlight').each(function(i, e) {
+    var $wrap = $('<div>').addClass('highlight-wrap');
+    $(e).after($wrap);
+    $wrap.append($('<button>').addClass('copy-btn').append('复制').on('click', function(e) {
+      var code = $(this).parent().find('.code').find('.line').map(function(i, e) {
+        return $(e).text();
+      }).toArray().join('\n');
+      var ta = document.createElement('textarea');
+      var yPosition = window.pageYOffset || document.documentElement.scrollTop;
+      ta.style.top = yPosition + 'px'; // Prevent page scroll
+      ta.style.position = 'absolute';
+      ta.style.opacity = '0';
+      ta.readOnly = true;
+      ta.value = code;
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, code.length);
+      ta.readOnly = false;
+      var result = document.execCommand('copy');
+      
+        if (result) $(this).text('复制成功');
+        else $(this).text('复制失败');
+      
+      ta.blur(); // For iOS
+      $(this).blur();
+    })).on('mouseleave', function(e) {
+      var $b = $(this).find('.copy-btn');
+      setTimeout(function() {
+        $b.text('复制');
+      }, 300);
+    }).append(e);
+  })
+</script>
+
+
+  
+
+  
+
+</body>
+</html>

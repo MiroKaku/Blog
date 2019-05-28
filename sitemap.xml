@@ -2,6 +2,20 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://mirokaku.github.io/Blog/2019/New-INF-Template/</loc>
+    
+    <lastmod>2019-05-28T11:53:58.700Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://mirokaku.github.io/Blog/2019/INF-Template/</loc>
+    
+    <lastmod>2019-05-28T11:29:22.090Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://mirokaku.github.io/Blog/2017/IDA-VM-System/</loc>
     
     <lastmod>2019-05-27T06:23:58.993Z</lastmod>
@@ -19,13 +33,6 @@
     <loc>https://mirokaku.github.io/Blog/2019/About-InstrumentationCallback/</loc>
     
     <lastmod>2019-05-27T04:10:21.685Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://mirokaku.github.io/Blog/2019/INF-Template/</loc>
-    
-    <lastmod>2019-05-25T10:14:23.522Z</lastmod>
     
   </url>
   

@@ -41,26 +41,26 @@ DefaultDestDir      = 12
 ; Each filename entry must specify the exact name of a file on the source disk. 
 ;     You cannot use a %strkey% token to specify the file name.
 [SourceDisksFiles]
-Template.sys     = 1,,
+Template.sys        = 1,,
 
 [SourceDisksFiles.x86]
-Template.x86.sys = 1,,
+Template.x86.sys    = 1,,
 
 [SourceDisksFiles.amd64]
-Template.x64.sys = 1,,
+Template.x64.sys    = 1,,
 
 
 ; Copyfiles MSDN:
 ;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-copyfiles-directive
-[Files.Copy.NTx86]
+[Install.Copyfiles.NTx86]
 %DriverName%.sys,%DriverName%.x86.sys,,0x00004022 ; COPYFLG_NOSKIP | COPYFLG_NO_VERSION_DIALOG | COPYFLG_IN_USE_RENAME
 
-[Files.Copy.NTamd64]
+[Install.Copyfiles.NTamd64]
 %DriverName%.sys,%DriverName%.x64.sys,,0x00004022
 
 ; Delfiles MSDN:
 ;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-delfiles-directive
-[Files.Del]
+[Install.Delfiles]
 %DriverName%.sys
 
 
@@ -70,17 +70,17 @@ Template.x64.sys = 1,,
 
 
 [DefaultInstall.NTx86]
-CopyFiles=Files.Copy.NTx86
+CopyFiles       = Install.Copyfiles.NTx86
 
 [DefaultInstall.NTamd64]
-CopyFiles=Files.Copy.NTamd64
+CopyFiles       = Install.Copyfiles.NTamd64
 
 
 ; LegacyUninstall MSDN:
 ;     https://docs.microsoft.com/en-us/windows-hardware/drivers/develop/creating-a-primitive-driver
 [DefaultUninstall]
-LegacyUninstall	= 1
-DelFiles		= Files.Del
+LegacyUninstall = 1
+DelFiles        = Install.Delfiles
 
 
 [DefaultInstall.NTx86.Services]
@@ -122,5 +122,5 @@ ErrorControl   = 1                  ; SERVICE_ERROR_NORMAL
 ManufacturerName        = "Template"
 DriverName              = "Template"
 ServiceName             = "Template"
-ServiceDesc             = "Template INF"
+ServiceDesc             = "Template Legacy Driver"
 DiskId                  = "Template Device Installation Disk"
