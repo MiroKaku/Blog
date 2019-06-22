@@ -79,9 +79,13 @@ CopyFiles       =Install.Copyfiles.NTamd64
 
 ; LegacyUninstall MSDN:
 ;     https://docs.microsoft.com/en-us/windows-hardware/drivers/develop/creating-a-primitive-driver
-[DefaultUninstall]
-LegacyUninstall	= 1
-DelFiles		= Install.Delfiles
+[DefaultUninstall.NTx86]
+LegacyUninstall = 1
+DelFiles        = Install.Delfiles
+
+[DefaultUninstall.NTamd64]
+LegacyUninstall = 1
+DelFiles        = Install.Delfiles
 
 
 [DefaultInstall.NTx86.Services]
@@ -97,7 +101,10 @@ AddService=%ServiceName%,,InstallService
 
 ; DelService MSDN:
 ;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-delservice-directive
-[DefaultUninstall.Services]
+[DefaultUninstall.NTx86.Services]
+DelService = %ServiceName%,0x200
+
+[DefaultUninstall.NTamd64.Services]
 DelService = %ServiceName%,0x200
 
 
